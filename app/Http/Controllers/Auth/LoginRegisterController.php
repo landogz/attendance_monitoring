@@ -16,7 +16,7 @@ class LoginRegisterController extends Controller
     public function __construct()
     {
         $this->middleware('guest')->except([
-            'logout', 'dashboard'
+            'logout', 'dashboard','get_profile','store_profile','store_profile_edit','delete_account'
         ]);
     }
 
@@ -56,6 +56,102 @@ class LoginRegisterController extends Controller
         return redirect()->route('dashboard')
         ->withSuccess('You have successfully registered & logged in!');
     }
+
+    public function store_profile(Request $request)
+    {
+        try {
+            $request->validate([
+                'name' => 'required|string|max:250',
+                'email' => 'required|email|max:250|unique:users,email,' . auth()->id(), // Ignore current user's email for uniqueness validation
+                'password' => 'nullable|min:8|confirmed' // Update password only if provided
+            ]);
+        
+            // Find the authenticated user
+            $user = User::findOrFail(auth()->id());
+        
+            // Update the user's name and email
+            $user->name = $request->name;
+            $user->email = $request->email;
+        
+            // Update password if provided
+            if ($request->filled('password')) {
+                $user->password = Hash::make($request->password);
+                Auth::logout();
+            }
+        
+            $user->save();
+        
+            return response()->json(['status' => 200, 'message' => 'Profile updated successfully!']);
+        } catch (\Exception $e) {
+            // Log the exception or handle it as needed
+            return response()->json(['status' => 500, 'message' => $e->getMessage()]);
+        }
+    }
+    public function store_profile_edit(Request $request)
+    {
+        try {
+            // Check if the profile ID is null, indicating a new account creation
+            if ($request->profile_id === null || $request->profile_id === '') {
+                $request->validate([
+                    'name_profile' => 'required|string|max:250',
+                    'email_profile' => 'required|email|max:250|unique:users,email',
+                    'password_profile' => 'required|min:8|confirmed'
+                ]);
+    
+                // Create a new user
+                $user = new User();
+                $user->name = $request->name_profile;
+                $user->email = $request->email_profile;
+                $user->password = Hash::make($request->password_profile);
+                $user->save();
+    
+                return response()->json(['status' => 200, 'message' => 'Account created successfully!']);
+            } else {
+                // Update an existing user profile
+                $request->validate([
+                    'name_profile' => 'required|string|max:250',
+                    'email_profile' => 'required|email|max:250|unique:users,email,' . $request->profile_id, // Ignore current user's email for uniqueness validation
+                    'password_profile' => 'nullable|min:8|confirmed' // Update password only if provided
+                ]);
+    
+                // Find the authenticated user
+                $user = User::findOrFail($request->profile_id);
+    
+                // Update the user's name and email
+                $user->name = $request->name_profile;
+                $user->email = $request->email_profile;
+    
+                // Update password if provided
+                if ($request->filled('password')) {
+                    $user->password = Hash::make($request->password_profile);
+                }
+    
+                $user->save();
+    
+                return response()->json(['status' => 200, 'message' => 'Profile updated successfully!']);
+            }
+        } catch (\Exception $e) {
+            // Log the exception or handle it as needed
+            return response()->json(['status' => 500, 'message' => $e->getMessage()]);
+        }
+    }
+    
+        // delete student ajax request
+        public function delete_account(Request $request) {
+            $id = $request->id;
+            $emp = User::find($id);
+            
+            User::destroy($id);
+        }
+    
+
+public function get_profile(Request $request) {
+    $id = $request->id;
+    $emp = User::find($id);
+    return response()->json($emp);
+
+}
+
 
     /**
      * Display a login form.
@@ -110,6 +206,7 @@ class LoginRegisterController extends Controller
             'email' => 'Please login to access the dashboard.',
         ])->onlyInput('email');
     } 
+
     
     /**
      * Log out the user from application.

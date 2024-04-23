@@ -8,14 +8,14 @@
 				<div class="login-area">
 					<div class="text-center mb-4">
 						<a href="index-2.html">
-							<img src="assets/images/logo.svg" alt="logo">
+							<img src="assets/images/logo.png" alt="logo">
 						</a>
 					</div> 
 					<div class="card rounded-3 border-0 mb-24 mw-560 m-auto">
 						<div class="card-body p-30">
 							<div class="card-title mb-20 pb-20 border-bottom border-color text-center">
 								<h4 class="mb-0 mb-2 fs-20">Login</h4>
-								<p class="text-body fs-14">Welcome back Jacob Smith!</p>
+								<p class="text-body fs-14">Welcome back!</p>
 							</div>
 
 							<form  action="{{ route('authenticate') }}" method="post">
@@ -48,9 +48,9 @@
 											Remember password ? 
 										</label>
 									</div>
-									<div class="mb-4">
+									{{-- <div class="mb-4">
 										<a href="forgot-password.html" class="fs-14 text-primary text-decoration-none">Forgot your password?</a>
-									</div>
+									</div> --}}
 								</div>
 								<div class="form-group mb-4">
 									<button type="submit" name="submit" class="btn btn-primary rounded-1 w-100 py-3">Login</button>

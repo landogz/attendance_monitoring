@@ -8,7 +8,7 @@
 <div class="register-area py-5">
   <div class="text-center mb-4">
     <a href="index-2.html">
-      <img src="assets/images/logo.svg" alt="logo">
+      <img src="assets/images/logo.png" alt="logo">
     </a>
   </div>
   <div class="card rounded-3 border-0 mb-24 mw-560 m-auto">
