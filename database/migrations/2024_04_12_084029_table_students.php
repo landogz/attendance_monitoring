@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('Name');
             $table->string('Parent_Name');
             $table->string('Parent_Number');
+            $table->string('Grade');
+            $table->string('Address');
             $table->string('Image')->nullable();
             $table->timestamps();
         });

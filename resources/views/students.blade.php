@@ -61,7 +61,7 @@
 
         <!-- Modal -->
 	<div class="modal fade" id="addstudent" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-		<div class="modal-dialog">
+		<div class="modal-dialog modal-lg">
 			<div class="modal-content">
 				<div class="modal-header">
 					<h1 class="modal-title fs-5" id="staticBackdropLabel">Add New Student</h1>
@@ -81,13 +81,29 @@
                                     <input type="text" name="fullname" id="fullname" class="form-control"  placeholder="Full Name" required>
                                     </div>
                                 </div>
+                                <div class="row">
+                                  <div class="col-lg-6">
+                                    <label for="parent_name" class="form-label mb-10 fs-14 text-dark fw-semibold">Parent Name</label>
+                                    <input type="text" name="parent_name" id="parent_name" class="form-control"  placeholder="Parent Name" required>
+                                  </div>
+                                  <div class="col-lg-6">
+                                    <label for="lname" class="form-label mb-10 fs-14 text-dark fw-semibold">Parent Number</label>
+                                    <input type="text" name="parent_number" id="parent_number" class="form-control"  placeholder="Parent Number" required>
+                                  </div>
+                                </div>
+                                    <div class="form-group mb-25">
+                                      <label for="grade" class="form-label mb-10 fs-14 text-dark fw-semibold">Grade</label>
+                                      <select name="grade" id="grade" class="form-control" required>
+                                          <option value="">Select Grade</option>
+                                          <option value="7">Grade 7</option>
+                                          <option value="8">Grade 8</option>
+                                          <option value="9">Grade 9</option>
+                                          <option value="10">Grade 10</option>
+                                      </select>
+                                  </div>
                                     <div  class="form-group mb-25">
-                                        <label for="parent_name" class="form-label mb-10 fs-14 text-dark fw-semibold">Parent Name</label>
-                                        <input type="text" name="parent_name" id="parent_name" class="form-control"  placeholder="Parent Name" required>
-                                    </div>
-                                    <div  class="form-group mb-25">
-                                        <label for="lname" class="form-label mb-10 fs-14 text-dark fw-semibold">Parent Number</label>
-                                        <input type="text" name="parent_number" id="parent_number" class="form-control"  placeholder="Parent Number" required>
+                                        <label for="lname" class="form-label mb-10 fs-14 text-dark fw-semibold">Address</label>
+                                        <input type="text" name="address" id="address" class="form-control"  placeholder="Address" required>
                                     </div>
                                 <div class="form-group mb-25">
                                     <label for="avatar" class="form-label mb-10 fs-14 text-dark fw-semibold">Select Image</label>
@@ -220,6 +236,8 @@ $(document).ready(function() {
             $("#fullname").val(response.Name);
             $("#parent_name").val(response.Parent_Name);
             $("#parent_number").val(response.Parent_Number);
+            $("#grade").val(response.Grade);
+            $("#address").val(response.Address);
             $("#avatars").html(
               `<img src="storage/images/${response.Image}" width="100" class="img-fluid img-thumbnail">`);
             $("#student_id").val(response.id);
@@ -350,6 +368,7 @@ $("#add_employee_form").submit(function(e) {
     $("#fullname").val('');
     $("#parent_name").val('');
     $("#parent_number").val('');
+    $("#address").val('');
     $("#avatar").val('');
     // Optionally, you can also reset any other form fields here
     $("#avatars").html('');
