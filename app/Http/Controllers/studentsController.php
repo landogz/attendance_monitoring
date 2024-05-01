@@ -109,15 +109,15 @@ public function fetchstudent_logs() {
             <tbody>';
 
             foreach ($api as $rs) {
-                // Convert date to PH time zone
-                $phTime = Carbon::parse($rs->Date)->setTimezone('Asia/Manila')->format('F d, Y');
+            // Convert date to PH time zone
+                $phTime = Carbon::parse($rs->Date)->format('F d, Y');
 
                 // Format time with AM/PM or display N/A if time is null
-                $amIn = $rs->AM_in ? Carbon::parse($rs->AM_in)->setTimezone('Asia/Manila')->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
-                $amOut = $rs->AM_out ? Carbon::parse($rs->AM_out)->setTimezone('Asia/Manila')->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
-                $pmIn = $rs->PM_in ? Carbon::parse($rs->PM_in)->setTimezone('Asia/Manila')->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
-                $pmOut = $rs->PM_out ? Carbon::parse($rs->PM_out)->setTimezone('Asia/Manila')->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
-            
+                $amIn = $rs->AM_in ? Carbon::parse($rs->AM_in)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
+                $amOut = $rs->AM_out ? Carbon::parse($rs->AM_out)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
+                $pmIn = $rs->PM_in ? Carbon::parse($rs->PM_in)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
+                $pmOut = $rs->PM_out ? Carbon::parse($rs->PM_out)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
+
                 $output .= '<tr>
                     <td>' . $rs->id . '</td>
                     <td class="align-items-center"><img style="cursor: pointer;" src="storage/images/' . $rs->Image . '" class="rounded-circle wh-50" onclick="openImageViewer(\'storage/images/' . $rs->Image . '\')"><span class="fw-medium fs-15 ms-3">' . $rs->Student_Number . '</span></td>
@@ -402,6 +402,182 @@ curl_close ($ch);
 
 
 
+public function scanner_afternoon(Request $request)
+{
+
+    // Search for the student ID based on the provided scanid
+    $student = students::where('Student_Number', $request->scanid)->first();
+    
+    // Fetch the active API details from the sms_apis table
+    $activeApi = SmsApi::where('active', 'Active')->first();
+
+
+    if (!$student) {
+        return response()->json([
+            'status' => 400,
+            'message' => 'Student ID not found',
+        ]);
+    }
+
+    // Get the ID primary of the student
+    $studentId = $student->id;
+
+    // Get the current time in PH time
+    $currentTime = Carbon::now('Asia/Manila')->format('H:i:s');
+
+    // Determine whether it's AM or PM based on the current time
+    $timeCategory = ($currentTime < '12:00:00') ? 'AM' : 'PM';
+
+    // Check if there is already a record for today with the student ID
+    $existingLog = table_logs::where('Student_ID', $studentId)
+        ->whereDate('created_at', today())
+        ->first();
+
+// Get the current time in Manila time (PH time) with AM/PM format
+$manilaTime = Carbon::now('Asia/Manila')->format('F d, Y h:i A');
+
+$semaphoreText = "$student->Name ($student->Student_Number), departed from the school at $manilaTime";
+
+    $ch = curl_init();
+$parameters = array(
+    'apikey' => $activeApi->api,
+    'number' => $student->Parent_Number,
+    'message' => 'Senior Highschool : ' . $semaphoreText,
+    'sendername' => 'LandogzWeb'
+);
+
+
+
+    if ($existingLog) {
+        // Retrieve the value of AM_in and PM_in from $existingLog if they exist
+        $AM_in = $existingLog->AM_out ?? null;
+        $PM_in = $existingLog->PM_out ?? null;
+
+        if ($timeCategory === 'AM') {
+            if ($AM_in === null || empty($AM_in)) {
+                $existingLog->update(['AM_out' => $currentTime]);
+
+                $responseData = [
+                    'status' => 200,
+                    'message' => 'Successfully departed to the Campus!',
+                    'student' => [
+                        'id' => $student->id,
+                        'name' => $student->Name,
+                        'student_number' => $student->Student_Number,
+                        'image_url' => $student->Image,
+                        'grade' => $student->Grade,
+                        // Add other details as needed
+                    ],
+                ];
+                
+curl_setopt( $ch, CURLOPT_URL,'https://semaphore.co/api/v4/messages' );
+curl_setopt( $ch, CURLOPT_POST, 1 );
+
+//Send the parameters set above with the request
+curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( $parameters ) );
+
+// Receive response from server
+curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+$output = curl_exec( $ch );
+curl_close ($ch);
+
+            } else {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'You already scanned your QR Code',
+                    'student' => [
+                        'id' => $student->id,
+                        'name' => $student->Name,
+                        'student_number' => $student->Student_Number,
+                        'image_url' => $student->Image,
+                        'grade' => $student->Grade,
+                        // Add other details as needed
+                    ],
+                ]);
+            }
+        } else {
+            if ($PM_in === null || empty($PM_in)) {
+                $existingLog->update(['PM_out' => $currentTime]);
+
+                $responseData = [
+                    'status' => 200,
+                    'message' => 'Successfully departed to the Campus!',
+                    'student' => [
+                        'id' => $student->id,
+                        'name' => $student->Name,
+                        'student_number' => $student->Student_Number,
+                        'image_url' => $student->Image,
+                        'grade' => $student->Grade,
+                        // Add other details as needed
+                    ],
+                ];
+                
+curl_setopt( $ch, CURLOPT_URL,'https://semaphore.co/api/v4/messages' );
+curl_setopt( $ch, CURLOPT_POST, 1 );
+
+//Send the parameters set above with the request
+curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( $parameters ) );
+
+// Receive response from server
+curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+$output = curl_exec( $ch );
+curl_close ($ch);
+
+
+            } else {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'You already scanned your QR Code',
+                    'student' => [
+                        'id' => $student->id,
+                        'name' => $student->Name,
+                        'student_number' => $student->Student_Number,
+                        'image_url' => $student->Image,
+                        'grade' => $student->Grade,
+                        // Add other details as needed
+                    ],
+                ]);
+            }
+        }
+    } else {
+               // Create a new record if no record is found
+               table_logs::create([
+                'Student_ID' => $studentId,
+                'Date' => today(),
+                $timeCategory . '_out' => $currentTime, // Set AM_in or PM_in based on the time
+                'created_at' => now(),
+            ]);
+
+       
+
+        // Prepare the response data indicating new record creation
+        $responseData = [
+            'status' => 200,
+            'message' => 'Successfully departed to the Campus!',
+            'student' => [
+                'id' => $student->id,
+                'name' => $student->Name,
+                'student_number' => $student->Student_Number,
+                'image_url' => $student->Image,
+                'grade' => $student->Grade,
+                // Add other details as needed
+            ],
+        ];
+        
+curl_setopt( $ch, CURLOPT_URL,'https://semaphore.co/api/v4/messages' );
+curl_setopt( $ch, CURLOPT_POST, 1 );
+
+//Send the parameters set above with the request
+curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( $parameters ) );
+
+// Receive response from server
+curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+$output = curl_exec( $ch );
+curl_close ($ch);
+    }
+
+    return response()->json($responseData);
+}
 
  
  // edit an student ajax request

@@ -20,11 +20,18 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/exit', function () {
+    return view('exit');
+});
+
 Route::group(['middleware' => 'web'], function () {
     Route::get('/register', [LoginRegisterController::class, 'register'])->name('register');
     Route::post('/store', [LoginRegisterController::class, 'store'])->name('store');
     Route::get('/login', [LoginRegisterController::class, 'login'])->name('login');
     Route::post('/authenticate', [LoginRegisterController::class, 'authenticate'])->name('authenticate');
+    
+    Route::post('/scanner_morning', [studentsController::class, 'scanner_morning'])->name('scanner_morning');
+    Route::post('/scanner_afternoon', [studentsController::class, 'scanner_afternoon'])->name('scanner_afternoon');
     
     Route::group(['middleware' => 'auth'], function () {
         Route::get('/dashboard', [LoginRegisterController::class, 'dashboard'])->name('dashboard');
@@ -49,7 +56,6 @@ Route::group(['middleware' => 'web'], function () {
         Route::delete('/delete_student', [studentsController::class, 'delete_student'])->name('delete_student');
         Route::get('/edit_student', [studentsController::class, 'edit'])->name('edit_student');
         
-        Route::post('/scanner_morning', [studentsController::class, 'scanner_morning'])->name('scanner_morning');
 
         
         Route::get('/student-logs', [studentsController::class, 'student_logs'])->name('students-logs');

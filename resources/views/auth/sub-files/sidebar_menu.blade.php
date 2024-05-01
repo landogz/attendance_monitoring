@@ -23,12 +23,6 @@
                 <span class="title">Student Logs</span>
             </a>
         </li>
-        <li class="{{ Request::is('text-logs*') ? ' mm-active' : '' }}">
-            <a href="to-do-list.html" class="menu-title">
-                <span class="icon"><i data-feather="message-square"></i></span>
-                <span class="title">Text Logs</span>
-            </a>
-        </li>
         <li class="{{ Request::is('sms-api') ? 'mm-active' : '' }}">
             <a href="#" class="has-arrow menu-title{{ Request::is('sms-api') ? ' active' : '' }}" aria-expanded="{{ Request::is('sms-api') ? 'true' : 'false' }}">
                 <span class="icon"><i data-feather="settings"></i></span>
@@ -36,7 +30,6 @@
             </a>
             <ul class="sidemenu-second-level show mm-collapse {{ Request::is('sms-api') ? ' mm-show' : '' }}">
                 <li><a href="{{ route('smsapi') }}" class="{{ Request::is('sms-api') ? 'active' : '' }}">SMS Gateway API</a></li>
-                <li><a href="my-drive.html" class="{{ Request::is('settings/sms-messages*') ? 'active' : '' }}">SMS Messages</a></li>
                 <li><a href="{{ route('accounts') }}" class="{{ Request::is('accounts*') ? 'active' : '' }}">Admin Accounts</a></li>
             </ul>
         </li>

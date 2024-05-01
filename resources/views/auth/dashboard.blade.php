@@ -14,7 +14,7 @@
 				<!--=== End Header Area ===-->
 
 				<!--=== Start Website Overview Area ===-->
-				<div class="website-overview-area">
+				{{-- <div class="website-overview-area">
 					<div class="row justify-content-center">
 						<div class="col-xxl-12 js-grid">
 							<div class="row justify-content-center js-grid">
@@ -94,7 +94,7 @@
 						</div>
 
 					</div>
-				</div>
+				</div> --}}
 				<!--=== End Website Overview Area ===-->
 			</div>
 
