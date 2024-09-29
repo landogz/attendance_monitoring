@@ -1,66 +1,97 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Monitoring System README</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+        }
+        h3 {
+            color: #555;
+        }
+        ul {
+            list-style-type: square;
+            margin: 10px 0 20px 20px;
+        }
+        .author {
+            margin-top: 40px;
+            padding: 10px;
+            background-color: #e7f3fe;
+            border-left: 6px solid #2196F3;
+        }
+        pre {
+            background-color: #f4f4f4;
+            border-left: 4px solid #ccc;
+            padding: 10px;
+            overflow-x: auto;
+        }
+        code {
+            background-color: #eaeaea;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+    <h1>Attendance Monitoring System</h1>
 
-## About Laravel
+    <h2>Overview</h2>
+    <p>The Attendance Monitoring System is designed to help educational institutions track student attendance efficiently. This system provides a user-friendly interface for managing student records, logs, and subjects, ensuring easy access to attendance data for both teachers and administrators.</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+    <h2>Features</h2>
+    <ul>
+        <li><strong>Dashboard:</strong> A centralized view for quick insights into attendance statistics and student performance.</li>
+        <li><strong>List of Students:</strong> View and manage the list of enrolled students, including personal details and attendance records.</li>
+        <li><strong>Student Logs:</strong> Access detailed logs of student attendance, allowing for tracking of individual attendance patterns.</li>
+        <li><strong>Subjects Logs:</strong> Review logs related to different subjects, ensuring accountability and monitoring of subject-specific attendance.</li>
+        <li><strong>Subjects Management:</strong> Manage and organize subjects offered in the institution, enabling effective scheduling and tracking.</li>
+        <li><strong>Login Logs:</strong> Monitor user login activity, enhancing security and accountability within the system.</li>
+        <li><strong>Settings:</strong> Configure system settings, including SMS Gateway API integration and admin account management.</li>
+    </ul>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+    <h2>User Privileges</h2>
+    <p>The system supports different user privileges:</p>
+    <ul>
+        <li><strong>Administrator:</strong> Full access to all features and settings.</li>
+        <li><strong>Teacher:</strong> Limited access to student logs and relevant features.</li>
+    </ul>
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+    <h2>Installation</h2>
+    <p>Follow these steps to install the system:</p>
+    <pre>
+1. Clone the repository:
+   <code>git clone https://github.com/landogz/attendance_monitoring.git</code>
+2. Install dependencies:
+   <code>composer install</code>
+3. Set up the environment:
+   <code>cp .env.example .env</code>
+4. Run migrations:
+   <code>php artisan migrate</code>
+    </pre>
 
-## Learning Laravel
+    <h2>Usage</h2>
+    <p>Log in to the system with your credentials. Navigate through the sidebar menu to access various sections.</p>
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+    <h2>Author</h2>
+    <div class="author">
+        <strong>Rolan M. Benavidez Jr</strong><br>
+        Full Stack Web Developer<br>
+        <strong>Landogz Web Solutions</strong>
+    </div>
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
-
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+</body>
+</html>
