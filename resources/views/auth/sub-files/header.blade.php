@@ -26,11 +26,11 @@
                         <div class="dropdown user-profile">
                             <div class="btn border-0 p-0 d-flex align-items-center text-start" data-bs-toggle="dropdown">
                                 <div class="flex-shrink-0">
-                                    <img class="rounded-circle user" src="assets/images/user/user.png" alt="user">
+                                    <img class="rounded-circle user" src="{{ asset('assets/images/user/user.png') }}" alt="user">
                                 </div>
                                 <div class="flex-grow-1 ms-2 d-none d-xxl-block">
                                     <h3 class="fs-14 mb-0">{{ Auth::user()->name }}</h3>
-                                    <span class="fs-13 text-body">Administrator</span>
+                                    <span class="fs-13 text-body">{{ Auth::user()->privilege }}</span>
                                 </div>
                             </div>
                             <ul class="dropdown-menu border-0 rounded box-shadow">
@@ -137,7 +137,6 @@
                         _token: '{{ csrf_token() }}'
                       },
                       success: function(response) {
-                        console.log(response);
                         $("#name").val(response.name);
                         $("#email").val(response.email);
                       }

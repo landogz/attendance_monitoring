@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('table_logs', function (Blueprint $table) {
+        Schema::create('subject_logs', function (Blueprint $table) {
             $table->id();
-            $table->integer('Student_ID')->nullable();
+            $table->integer('subject_id'); // Foreign key
+            $table->integer('student_id')->nullable();
             $table->date('Date')->nullable();
-            $table->time('AM_in')->nullable();
-            $table->time('AM_out')->nullable();
-            $table->time('PM_in')->nullable();
-            $table->time('PM_out')->nullable();
-            $table->timestamps();
+            $table->time('In')->nullable();
+            $table->timestamps(); 
+            
+    
         });
     }
 
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('table_logs');
+        Schema::dropIfExists('subject_logs');
     }
 };

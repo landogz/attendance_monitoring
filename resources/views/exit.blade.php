@@ -84,6 +84,8 @@
                             icon: 'success',
                             title: 'Success!',
                             text: data.message,
+                            timer: 1000, // Auto close after 1 second (1000 milliseconds)
+                            showConfirmButton: false // Optional: Hide the confirm button
                         });
 
                         // Update student details on success
@@ -99,7 +101,9 @@
                         Swal.fire({
                             icon: 'error',
                             title: 'Error!',
-                            text: data.message || 'An error occurred. Please try again later.', // Display server error message or generic message
+                            text: data.message || 'An error occurred. Please try again later.',
+                            timer: 1000, // Auto close after 1 second (1000 milliseconds)
+                            showConfirmButton: false // Optional: Hide the confirm button
                         });
                     }
                 },

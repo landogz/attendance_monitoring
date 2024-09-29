@@ -9,6 +9,7 @@
                 <span class="title">Dashboard</span>
             </a>
         </li>
+    
         <!-- Menus -->
         <li><span class="cat">Menus</span></li>
         <li class="{{ Request::is('students') ? ' mm-active' : '' }}">
@@ -17,24 +18,52 @@
                 <span class="title">List of Students</span>
             </a>
         </li>
-        <li  class="{{ Request::is('student-logs') ? ' mm-active' : '' }}">
+        <li class="{{ Request::is('student-logs') ? ' mm-active' : '' }}">
             <a href="{{ route('students-logs') }}" class="menu-title">
                 <span class="icon"><i data-feather="file-text"></i></span>
                 <span class="title">Student Logs</span>
             </a>
         </li>
-        <li class="{{ Request::is('sms-api') ? 'mm-active' : '' }}">
-            <a href="#" class="has-arrow menu-title{{ Request::is('sms-api') ? ' active' : '' }}" aria-expanded="{{ Request::is('sms-api') ? 'true' : 'false' }}">
-                <span class="icon"><i data-feather="settings"></i></span>
-                <span class="title">Settings</span>
+
+        <li class="{{ Request::is('subjects_logs') ? ' mm-active' : '' }}">
+            <a href="{{ route('subjects_logs') }}" class="menu-title">
+                <span class="icon"><i data-feather="file-text"></i></span>
+                <span class="title">Subjects Logs</span>
             </a>
-            <ul class="sidemenu-second-level show mm-collapse {{ Request::is('sms-api') ? ' mm-show' : '' }}">
-                <li><a href="{{ route('smsapi') }}" class="{{ Request::is('sms-api') ? 'active' : '' }}">SMS Gateway API</a></li>
-                <li><a href="{{ route('accounts') }}" class="{{ Request::is('accounts*') ? 'active' : '' }}">Admin Accounts</a></li>
-            </ul>
+        </li>
+
+        <li class="{{ Request::is('subjects') ? ' mm-active' : '' }}">
+            <a href="{{ route('subjects') }}" class="menu-title">
+                <span class="icon"><i data-feather="book-open"></i></span>
+                <span class="title">Subjects</span>
+            </a>
         </li>
         
+        @if(Auth::user()->privilege == 'Teacher')
+        @endif
+    
+        <!-- Conditionally hide Login Logs and Settings if the privilege is 'Teacher' -->
+        @if(Auth::user()->privilege !== 'Teacher')
+        
+            <li class="{{ Request::is('loginlogs') ? ' mm-active' : '' }}">
+                <a href="{{ route('loginlogs') }}" class="menu-title">
+                    <span class="icon"><i data-feather="key"></i></span>
+                    <span class="title">Login Logs</span>
+                </a>
+            </li>
+            <li class="{{ Request::is('sms-api') ? 'mm-active' : '' }}">
+                <a href="#" class="has-arrow menu-title{{ Request::is('sms-api') ? ' active' : '' }}" aria-expanded="{{ Request::is('sms-api') ? 'true' : 'false' }}">
+                    <span class="icon"><i data-feather="settings"></i></span>
+                    <span class="title">Settings</span>
+                </a>
+                <ul class="sidemenu-second-level show mm-collapse {{ Request::is('sms-api') ? ' mm-show' : '' }}">
+                    <li><a href="{{ route('smsapi') }}" class="{{ Request::is('sms-api') ? 'active' : '' }}">SMS Gateway API</a></li>
+                    <li><a href="{{ route('accounts') }}" class="{{ Request::is('accounts*') ? 'active' : '' }}">Admin Accounts</a></li>
+                </ul>
+            </li>
+        @endif
     </ul>
+    
 </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 

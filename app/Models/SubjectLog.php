@@ -5,8 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class students extends Model
+class SubjectLog extends Model
 {
     use HasFactory;
-    protected $fillable = ['Student_Number','Name','Email','Parent_Name','Parent_Number','Grade','Address','Image'];
+    protected $table = 'subject_logs';
+    protected $fillable = ['subject_id','student_id','Date','In','Out'];
 }

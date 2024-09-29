@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Models\User;
+use App\Models\LoginLog; // Add this to use the LoginLog model
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http; // Import Http facade
+use Carbon\Carbon;
 
 class LoginRegisterController extends Controller
 {
@@ -47,6 +50,7 @@ class LoginRegisterController extends Controller
         User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'privilege' => $request->priv,
             'password' => Hash::make($request->password)
         ]);
 
@@ -72,6 +76,8 @@ class LoginRegisterController extends Controller
             // Update the user's name and email
             $user->name = $request->name;
             $user->email = $request->email;
+            $user->privilege = $request->priv;
+            $user->Grade = $request->grade;
         
             // Update password if provided
             if ($request->filled('password')) {
@@ -102,6 +108,8 @@ class LoginRegisterController extends Controller
                 $user = new User();
                 $user->name = $request->name_profile;
                 $user->email = $request->email_profile;
+                $user->privilege = $request->priv;
+                $user->Grade = $request->grade;
                 $user->password = Hash::make($request->password_profile);
                 $user->save();
     
@@ -120,6 +128,8 @@ class LoginRegisterController extends Controller
                 // Update the user's name and email
                 $user->name = $request->name_profile;
                 $user->email = $request->email_profile;
+                $user->privilege = $request->priv;
+                $user->Grade = $request->grade;
     
                 // Update password if provided
                 if ($request->filled('password')) {
@@ -176,9 +186,28 @@ public function get_profile(Request $request) {
             'password' => 'required'
         ]);
 
+       
+
         if(Auth::attempt($credentials))
         {
             $request->session()->regenerate();
+
+               // Fetch global IP address using ipify API
+        $globalIpResponse = Http::get('https://api.ipify.org?format=json');
+        $globalIp = $globalIpResponse->json('ip');
+
+        // Get the current timestamp in Philippine Time (PHT)
+        $phTime = Carbon::now('Asia/Manila'); // Specify the timezone
+
+               // Log the login details in the login_logs table
+          LoginLog::create([
+            'user_id' => Auth::id(),                       // Authenticated user's ID
+            'ip_address' => $globalIp,                     // Global IP address
+            'user_agent' => $request->header('User-Agent'), // Browser and device info
+            'login_time' => $phTime,                       // Current timestamp in PHT
+        ]);
+
+
             return redirect()->route('dashboard')
                 ->withSuccess('You have successfully logged in!');
         }
@@ -216,6 +245,15 @@ public function get_profile(Request $request) {
      */
     public function logout(Request $request)
     {
+         // Update the logged-in user (e.g., set last active time)
+    if (Auth::check()) {
+        $user = User::find(Auth::id()); // Find the currently authenticated user
+
+        // Update any user attributes before logout
+        $user->last_active = now();  // Update last active timestamp (example)
+        $user->save();               // Save changes to the user
+    }
+    
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

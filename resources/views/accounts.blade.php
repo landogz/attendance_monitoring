@@ -89,6 +89,28 @@
                       </div>
                     </div>
                     <div class="form-group mb-4">
+                      <label class="fw-semibold fs-14 text-dark mb-2">Privilege<span class="text-danger">*</span></label>
+                      <div class="form-floating">
+                        <select class="form-select form-control" aria-label="Default select example" id="priv" name="priv">
+                          <option selected="">Enter Privilege</option>
+                          <option value="Administrator">Administrator</option>
+                          <option value="Teacher">Teacher</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group mb-4"  id="gradeDiv" style="display: none;">
+                      <label class="fw-semibold fs-14 text-dark mb-2">Grade<span class="text-danger">*</span></label>
+                      <div class="form-floating">
+                        <select class="form-select form-control" aria-label="Default select example" id="grade" name="grade">
+                          <option selected="">Enter Grade</option>
+                          <option value="7">7</option>
+                          <option value="8">8</option>
+                          <option value="9">9</option>
+                          <option value="10">10</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group mb-4">
                       <label class="fw-semibold fs-14 mb-2 text-dark">New Password <span class="text-danger">*</span></label>
                       <div class="form-floating position-relative">
                         <input type="password" class="form-control @error('password') is-invalid @enderror" id="password_profile" name="password_profile">
@@ -145,7 +167,7 @@ $(document).ready(function() {
             resetForm(); // Reset the form fields
         });
 
-      $(document).on('click', '.editprofile', function(e) {
+      $(document).on('click', '.addprofile', function(e) {
                     e.preventDefault();
                     let id = $(this).attr('id');
                     $.ajax({
@@ -158,6 +180,17 @@ $(document).ready(function() {
                       success: function(response) {
                         $("#name_profile").val(response.name);
                         $("#email_profile").val(response.email);
+                        $("#priv").val(response.privilege);
+
+                         // Check if the privilege is 'Teacher'
+                          if (response.privilege === 'Teacher') {
+                              $("#gradeDiv").show(); // Show grade dropdown
+                              $("#grade").val(response.Grade); // Set the grade value if available
+                          } else {
+                              $("#gradeDiv").hide(); // Hide grade dropdown
+                              $("#grade").val('');    // Clear grade value
+                          }
+
                         $("#profile_id").val(response.id);                        
                         $('#addprofile').modal('show');
                         $("#updateProfileBtn_profile").text('Update Account');
@@ -279,6 +312,8 @@ console.log(data);
     $("#profile_id").val('');
     $("#name_profile").val('');
     $("#email_profile").val('');
+    $("#privilege").val('');
+    $("#grade").val('');
     $("#password_profile").val('');
     $("#password_profile_confirmation").val('');
     $("#updateProfileBtn_profile").text('Save Account');
@@ -289,6 +324,24 @@ console.log(data);
              
     });
    
+  </script>
+  <script>
+    // Get the privilege select and the grade dropdown div
+    const privilegeSelect = document.getElementById('priv');
+    const gradeDiv = document.getElementById('gradeDiv');
+    const gradeSelect = document.getElementById('grade');
+  
+    // Add an event listener for when the privilege is changed
+    privilegeSelect.addEventListener('change', function() {
+      // Show the grade dropdown only if "Teacher" is selected
+      if (this.value === 'Teacher') {
+        gradeDiv.style.display = 'block';  // Show the grade dropdown
+        gradeSelect.setAttribute('required', 'required');  // Make grade required
+      } else {
+        gradeDiv.style.display = 'none';   // Hide the grade dropdown
+        gradeSelect.removeAttribute('required'); // Remove required from grade
+      }
+    });
   </script>
         	<!--=== Start CopyRight Area ===-->		
 					@include('auth.sub-files.footer')

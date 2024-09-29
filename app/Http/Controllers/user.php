@@ -30,6 +30,7 @@ class user extends Controller
                         <th>ID</th>
                         <th>Name</th>
                         <th>Email</th>
+                        <th>Privilege</th>
                         <th>Created At</th>
                         <th>Updated At</th>
                         <th>Actions</th>
@@ -48,10 +49,13 @@ class user extends Controller
                     <td>' . $rs->id . '</td>
                     <td>' . $rs->name . '</td>
                     <td>' . $rs->email . '</td>
+                    <td>'.
+                        $rs->privilege . (!empty($rs->Grade) ? ' (Grade ' . $rs->Grade . ')' : '') . '
+                    </td>
                     <td>' . $created_at_ph . '</td>
                     <td>' . $updated_at_ph . '</td>
                     <td>
-                        <button id="' . $rs->id . '" name="delete" class="icon border-0 rounded-circle text-center edit bg-success-transparent editprofile" data-bs-toggle="modal" data-bs-target="#addstudent" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit" ' . $disableButton . '>
+                        <button id="' . $rs->id . '" name="delete" class="icon border-0 rounded-circle text-center edit bg-success-transparent addprofile" data-bs-toggle="modal" data-bs-target="#addstudent" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit" ' . $disableButton . '>
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
                         <button id="' . $rs->id . '" name="delete" class="icon border-0 rounded-circle text-center trash bg-danger-transparent deleteprofile" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete" ' . $disableButton . '>

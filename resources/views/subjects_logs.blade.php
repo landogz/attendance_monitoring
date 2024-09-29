@@ -19,11 +19,11 @@
 				<!--=== End Header Area ===-->
 
                 <div class="section-title d-sm-flex justify-content-between align-items-center mb-24 text-center">
-					<h4 class="text-dark mb-0">Students Logs</h4>
+					<h4 class="text-dark mb-0">Subject Logs</h4>
 					<nav aria-label="breadcrumb">
 						<ol class="breadcrumb mb-0 mt-2 mt-sm-0 justify-content-center">
 							<li class="breadcrumb-item fs-14"><a class="text-decoration-none" href="{{route('dashboard')}}">Dashboard</a></li>
-							<li class="breadcrumb-item fs-14 text-primary" aria-current="page">Students Logs</li>
+							<li class="breadcrumb-item fs-14 text-primary" aria-current="page">Subject Logs</li>
 						</ol>
 					</nav>
 				</div>
@@ -36,22 +36,19 @@
 								<div class="card-body p-25">
 									<div class="d-flex justify-content-between align-items-center border-bottom border-color pb-25 mb-25">
 										<div class="d-flex align-items-center">
-											<h4 class="mb-0 ms-2 fs-16">List of Students Logs</h4>
+											<h4 class="mb-0 ms-2 fs-16">List of Subject Logs</h4>
 										</div>
-									</div>
-                                    
+									</div>  
                                     <div class="form-group mb-25">
+                                        <label for="subjectDropdown" class="form-label mb-10 fs-14 text-dark fw-semibold">Select Subject *</label>
                                         <div class="d-flex align-items-end">
-                                            <div class="me-3">
-                                                <label for="startGrade" class="form-label mb-0">Start Grade *</label>
-                                                <select name="start_grade" id="startGrade" class="form-control me-3" required style="width: auto;">
-                                                    <option value="">Select Grade</option>
-                                                    <option value="7">7</option>
-                                                    <option value="8">8</option>
-                                                    <option value="9">9</option>
-                                                    <option value="10">10</option>
-                                                </select>
-                                            </div>
+                                            <select name="subject_id" id="subjectDropdown" class="form-control me-3" required style="width: auto;">
+                                                <option value="">Select Subject</option>
+                                                @foreach ($subjects as $subject)
+                                                    <option value="{{ $subject->id }}">{{ $subject->Subject_Name }}</option>
+                                                @endforeach
+                                            </select>
+                                    
                                             <div class="me-3">
                                                 <label for="startDate" class="form-label mb-0">Start Date *</label>
                                                 <input type="date" id="startDate" class="form-control" required>
@@ -64,7 +61,9 @@
 
                                             <button type="button" id="clearAll" class="btn btn-secondary">Clear All</button>
                                         </div>
-                                    </div>                             
+                                    </div>
+                                    
+                                                             
                                         <div class="row justify-content-center">
                                             <div class="global-table-area">
                                                 <div class="table-responsive overflow-auto" id="show_accounts">
@@ -91,71 +90,17 @@
         
 
 <script>
-     // Define openImageViewer function outside of $(document).ready()
-     function openImageViewer(imageUrl) {
-        // Create a modal element
-        var modal = document.createElement('div');
-        modal.classList.add('modal');
-        
-        // Style the modal for fullscreen display
-        modal.style.position = 'fixed';
-        modal.style.top = '0';
-        modal.style.left = '0';
-        modal.style.width = '100%';
-        modal.style.height = '100%';
-        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
-        modal.style.zIndex = '9999';
-        modal.style.overflow = 'auto';
-
-        // Create a container for the image and close button
-        var modalContent = document.createElement('div');
-        modalContent.style.position = 'relative';
-        modalContent.style.margin = 'auto';
-        modalContent.style.maxWidth = '800px';
-        modalContent.style.padding = '20px';
-
-        // Create the close button with Font Awesome icon
-        var closeButton = document.createElement('span');
-        closeButton.classList.add('close');
-        closeButton.style.position = 'absolute';
-        closeButton.style.top = '28px'; // Adjust top position to move the icon inside
-        closeButton.style.right = '39px'; // Adjust right position to move the icon inside
-        closeButton.style.fontSize = '30px';
-        closeButton.style.color = '#fff';
-        closeButton.style.cursor = 'pointer';
-        closeButton.innerHTML = '<i class="fas fa-times"></i>'; // Font Awesome close icon
-        closeButton.addEventListener('click', function() {
-            modal.style.display = 'none';
-        });
-
-        // Create the image element
-        var image = document.createElement('img');
-        image.src = imageUrl;
-        image.style.maxWidth = '100%';
-        image.style.padding = '10px'; // Add padding around the image
-
-        // Append the elements to the modal
-        modalContent.appendChild(closeButton);
-        modalContent.appendChild(image);
-        modal.appendChild(modalContent);
-
-        // Append the modal to the document body
-        document.body.appendChild(modal);
-
-        // Display the modal
-        modal.style.display = 'block';
-    }
     $(document).ready(function() {
         
  // Set the initial title
- document.title = 'Student Logs';
+ document.title = 'Subject Logs';
 
       // fetch all employees ajax request
       fetchAllData();
  
       function fetchAllData() {
         $.ajax({
-            url: '{{ route('fetchstudent_logs') }}',
+            url: '{{ route('subjects_logs_data') }}',
             method: 'get',
             success: function(response) {
                 $("#show_accounts").html(response);
@@ -200,36 +145,34 @@
         });
     }
 
-
-
-    
     document.getElementById('clearAll').addEventListener('click', function() {
+        // Clear the subject dropdown
+        document.getElementById('subjectDropdown').selectedIndex = 0;
+
         // Clear the date inputs
         document.getElementById('startDate').value = '';
         document.getElementById('endDate').value = '';
-        // Clear the subject dropdown
-        document.getElementById('startGrade').selectedIndex = 0;
         fetchAllData();
     });
 
  // Function to fetch logs based on selected subject and date range
  function fetchSubjectLogs() {
+        var selectedSubjectId = $('#subjectDropdown').val(); // Get the selected subject ID
         var startDate = $('#startDate').val(); // Get the selected start date
         var endDate = $('#endDate').val(); // Get the selected end date
-        var startGrade = $('#startGrade').val(); // Get the selected start grade
 
         $.ajax({
-            url: '{{ route('student_logs_data') }}',
+            url: '{{ route('subjects_logs_data') }}',
             method: 'get',
             data: {
+                subject_id: selectedSubjectId, // Send the selected subject ID to the server
                 start_date: startDate, // Send the start date
-                end_date: endDate, // Send the end date
-                start_grade: startGrade // Send the selected grade
+                end_date: endDate // Send the end date
             },
             success: function(response) {
                 $("#show_accounts").html(response);
                 var table = $("#basic_config").DataTable({
-                    order: [[5, 'desc']], // Order by the first column in ascending order
+                    order: [[0, 'asc']], // Order by the first column in ascending order
                     dom: 'Bfrtip', // Show buttons for export
                     buttons: [
                         {
@@ -266,7 +209,7 @@
     }
 
     // Trigger fetchSubjectLogs function when the dropdown value or date range changes
-    $('#startGrade,#startDate, #endDate').change(function() {
+    $('#subjectDropdown, #startDate, #endDate').change(function() {
         fetchSubjectLogs(); // Fetch logs based on the selected subject and date range
     });
 

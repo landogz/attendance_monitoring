@@ -3,6 +3,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginRegisterController;
 use App\Http\Controllers\SMSApiController;
 use App\Http\Controllers\studentsController;
+use App\Http\Controllers\SubjectsController;
+use App\Http\Controllers\LoginLogController;
 use App\Http\Controllers\user;
 
 /*
@@ -60,10 +62,33 @@ Route::group(['middleware' => 'web'], function () {
         
         Route::get('/student-logs', [studentsController::class, 'student_logs'])->name('students-logs');
         Route::get('/fetchstudent_logs', [studentsController::class, 'fetchstudent_logs'])->name('fetchstudent_logs');
+        Route::get('/student-logs/data', [studentsController::class, 'student_logs_data'])->name('student_logs_data');
+
+        
+        Route::get('/printGrade/{grade}', [studentsController::class, 'printGrade'])->name('printGrade');
 
         
         Route::get('/accounts', [user::class, 'index'])->name('accounts');
         Route::get('/fetchAdminAccounts', [user::class, 'fetchAdminAccounts'])->name('fetchAdminAccounts');
+
+        Route::get('/loginlogs', [LoginLogController::class, 'loginlogs'])->name('loginlogs');
+        Route::get('/fetchLoginLogs', [LoginLogController::class, 'fetchLoginLogs'])->name('fetchLoginLogs');
+
+        
+        Route::get('/subjects', [SubjectsController::class, 'index'])->name('subjects');
+        Route::get('/fetchsubjects', [SubjectsController::class, 'fetchsubjects'])->name('fetchsubjects');
+        Route::post('/store_subject', [SubjectsController::class, 'store_subject'])->name('store_subject');
+        Route::get('/edit_subject', [SubjectsController::class, 'edit'])->name('edit_subject');
+        Route::delete('/delete_subject', [SubjectsController::class, 'delete_subject'])->name('delete_subject');
+
+        Route::get('/scan-subject/{subject}', [SubjectsController::class, 'scan'])->name('scan');
+        Route::post('/scanner_subject', [SubjectsController::class, 'scanner_subject'])->name('scanner_subject');
+
+        Route::get('/subjects_logs', [SubjectsController::class, 'subjects_logs'])->name('subjects_logs');
+        // Route::get('/subjects_logs_data', [SubjectsController::class, 'subjects_logs_data'])->name('subjects_logs_data');
+       
+        // Route to fetch the subject logs data (AJAX call)
+        Route::get('/subjects-logs/data', [SubjectsController::class, 'subjects_logs_data'])->name('subjects_logs_data');
 
         
     

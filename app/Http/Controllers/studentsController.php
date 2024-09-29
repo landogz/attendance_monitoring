@@ -12,6 +12,7 @@ use Illuminate\Validation\Rule;
 use App\Rules\PhilippinePhoneNumber;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http; 
+use Illuminate\Support\Facades\Auth; // Import Auth facade
 
 class studentsController extends Controller
 {
@@ -23,9 +24,42 @@ class studentsController extends Controller
     return view('student_logs');
 }
 
+public function printGrade($grade)
+{
+    // Check if the grade parameter is 'all'
+    if ($grade === 'all') {
+        // Fetch all students and order them by Grade
+        $students = DB::table('students')->orderBy('Grade', 'asc')->get();
+    } else {
+        // Fetch students based on the grade
+        $students = DB::table('students')->where('Grade', $grade)->get();
+    }
+
+    // Check if students were fetched
+    if ($students->isEmpty()) {
+        return "No students found for grade " . $grade; // Or handle this more gracefully
+    }
+
+    // Return a view specifically designed for printing
+    return view('print', compact('students', 'grade'));
+}
+
 public function fetchAccounts() {
     
-    $api = DB::table('students')->get();
+     // Get the logged-in user
+     $user = Auth::user();
+
+     // Check if the user is an Administrator or a Teacher
+     if ($user->privilege === 'Administrator') {
+         // Administrator: Get all students
+         $api = DB::table('students')->get();
+     } else if ($user->privilege === 'Teacher') {
+         // Teacher: Only get the students that match the grade they handle
+         // Assuming the teacher is assigned a specific grade to handle (e.g., based on user details or session)
+         // Let's assume that a "Teacher" is only assigned one grade
+         $handledGrade = $user->Grade; // This should be fetched from the teacher's profile or wherever it is defined
+         $api = DB::table('students')->where('Grade', $handledGrade)->get();
+     }
 
     $output = ''; // Initialize the $output variable
 
@@ -36,6 +70,7 @@ public function fetchAccounts() {
                     <th>ID</th>
                     <th>Student Number</th>
                     <th>Name</th>
+                    <th>Email</th>
                     <th>Parent</th>
                     <th>Parent Number</th>
                     <th>Grade</th>
@@ -50,6 +85,7 @@ public function fetchAccounts() {
                 <td>' . $rs->id . '</td>
                 <td class="align-items-center"><img style="cursor: pointer;" onclick="openImageViewer(\'storage/images/' . $rs->Image . '\')" src="storage/images/' . $rs->Image . '" class="rounded-circle wh-50"><span class="fw-medium fs-15 ms-3">' . $rs->Student_Number . '</span></td>
                 <td>' . $rs->Name . '</td>
+                <td>' . $rs->Email . '</td>
                 <td>' . $rs->Parent_Name . '</td>
                 <td>' . $rs->Parent_Number . '</td>
                 <td>' . $rs->Grade . '</td>
@@ -61,7 +97,7 @@ public function fetchAccounts() {
                 <button id="' . $rs->id . '" name="delete" class="icon border-0 rounded-circle text-center edit bg-success-transparent editIcon"  data-bs-toggle="modal" data-bs-target="#addstudent" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </button>
-                <button id="' . $rs->id . '" name="delete" class="icon border-0 rounded-circle text-center trash bg-danger-transparent deleteIcon"  data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
+                <button style="display:none;" id="' . $rs->id . '" name="delete" class="icon border-0 rounded-circle text-center trash bg-danger-transparent deleteIcon"  data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 </button>
                 </td>
@@ -78,25 +114,71 @@ public function fetchAccounts() {
     }
 }
 
-
-public function fetchstudent_logs() {
+public function student_logs_data(Request $request) {
     
-    $api = DB::table('table_logs')
-        ->join('students', 'students.id', '=', 'table_logs.Student_ID') // Left join on 'team_id'
-        ->select('table_logs.*', 'students.*') // Select all columns from both table
-        ->orderBy('table_logs.Date', 'desc')
-        ->get();
+// Get the logged-in user
+$user = Auth::user();
+
+// Get the start and end dates from the request
+$startDate1 = $request->input('start_date') ?? null;
+$endDate1 = $request->input('end_date') ?? null;
+
+// Base query to get all students and the distinct dates from table_logs
+$baseQuery = DB::table('students')
+    ->crossJoin(DB::raw('(SELECT DISTINCT Date FROM table_logs) AS all_dates'))
+    ->leftJoin('table_logs', function ($join) {
+        $join->on('students.id', '=', 'table_logs.Student_ID')
+             ->on('all_dates.Date', '=', 'table_logs.Date');
+    })
+    ->select('students.*', DB::raw('COALESCE(table_logs.Date, all_dates.Date) AS log_date'), 'table_logs.*')
+    ->orderBy('students.id', 'asc') // Order by student ID in ascending order
+    ->orderBy('log_date', 'asc'); // Order by log_date in ascending order
+
+// If user is Administrator, get all logs
+if ($user->privilege === 'Administrator') {
+    // Apply date range filter based on log_date
+    if ($startDate1 && $endDate1) {
+        $baseQuery->whereBetween(DB::raw('COALESCE(table_logs.Date, all_dates.Date)'), [$startDate1, $endDate1]);
+    }
+
+     // If a grade is provided, filter by the grade
+     if ($request->input('start_grade')) {
+        $baseQuery->where('students.Grade', $request->input('start_grade'));
+    }
+
+    
+    $api = $baseQuery->get();
+} else if ($user->privilege === 'Teacher') {
+    // Teacher: Only get logs for students that match the grade they handle
+    $handledGrade = $user->Grade; // Assuming 'Grade' is the attribute for the teacher's grade
+    
+    // Apply the grade filter
+    $baseQuery->where('students.Grade', $handledGrade);
+
+    // Apply date range filter based on log_date
+    if ($startDate1 && $endDate1) {
+        $baseQuery->whereBetween(DB::raw('COALESCE(table_logs.Date, all_dates.Date)'), [$startDate1, $endDate1]);
+    }
+
+    if ($request->input('start_grade')) {
+        $baseQuery->where('students.Grade', $request->input('start_grade'));
+    }
+
+    $api = $baseQuery->get();
+}
 
 
-    $output = ''; // Initialize the $output variable
 
-    if ($api->count() > 0) {
+      $output = ''; // Initialize the $output variable
+   
+    
+      if ($api->count() > 0) {
         $output .= '<table id="basic_config" class="table align-middle table-bordered">
             <thead  class="text-dark">  
                 <tr>
-                    <th>ID</th>
                     <th>Student Number</th>
                     <th>Name</th>
+                    <th>Grade</th>
                     <th>Parent</th>
                     <th>Parent Number</th>
                     <th>Date</th>
@@ -110,7 +192,7 @@ public function fetchstudent_logs() {
 
             foreach ($api as $rs) {
             // Convert date to PH time zone
-                $phTime = Carbon::parse($rs->Date)->format('F d, Y');
+                $phTime = Carbon::parse($rs->log_date)->format('F d, Y');
 
                 // Format time with AM/PM or display N/A if time is null
                 $amIn = $rs->AM_in ? Carbon::parse($rs->AM_in)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
@@ -119,9 +201,96 @@ public function fetchstudent_logs() {
                 $pmOut = $rs->PM_out ? Carbon::parse($rs->PM_out)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
 
                 $output .= '<tr>
-                    <td>' . $rs->id . '</td>
                     <td class="align-items-center"><img style="cursor: pointer;" src="storage/images/' . $rs->Image . '" class="rounded-circle wh-50" onclick="openImageViewer(\'storage/images/' . $rs->Image . '\')"><span class="fw-medium fs-15 ms-3">' . $rs->Student_Number . '</span></td>
                     <td>' . $rs->Name . '</td>
+                     <td>' . 'Grade ' . $rs->Grade . '</td>
+                    <td>' . $rs->Parent_Name . '</td>
+                    <td>' . $rs->Parent_Number . '</td>
+                    <td>' . $phTime . '</td>
+                    <td>' . $amIn . '</td>
+                    <td>' . $amOut . '</td>
+                    <td>' . $pmIn . '</td>
+                    <td>' . $pmOut . '</td>
+                </tr>';
+            }
+            
+
+        $output .= '</tbody></table>';
+        echo $output;
+    } else {
+        echo '<div class="alert alert-danger bg-danger text-white" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-circle me-2" style="width: 20px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        No record in the database!
+    </div>';
+    }
+   }
+
+public function fetchstudent_logs() {
+    
+// Get the logged-in user
+$user = Auth::user();
+
+// Base query to get all students and the distinct dates from table_logs
+$baseQuery = DB::table('students')
+    ->crossJoin(DB::raw('(SELECT DISTINCT Date FROM table_logs) AS all_dates'))
+    ->leftJoin('table_logs', function ($join) {
+        $join->on('students.id', '=', 'table_logs.Student_ID')
+             ->on('all_dates.Date', '=', 'table_logs.Date');
+    })
+    ->select('students.*', DB::raw('COALESCE(table_logs.Date, all_dates.Date) AS log_date'), 'table_logs.*')
+    ->orderBy('students.id', 'asc') // Order by student ID in ascending order
+    ->orderBy('log_date', 'asc'); // Order by log_date in ascending order
+
+// If user is Administrator, get all logs
+if ($user->privilege === 'Administrator') {
+    // Apply date range filter based on log_date
+    
+    $api = $baseQuery->get();
+} else if ($user->privilege === 'Teacher') {
+    // Teacher: Only get logs for students that match the grade they handle
+    $handledGrade = $user->Grade; // Assuming 'Grade' is the attribute for the teacher's grade
+    
+    // Apply the grade filter
+    $baseQuery->where('students.Grade', $handledGrade);
+
+    $api = $baseQuery->get();
+}
+        
+
+    $output = ''; // Initialize the $output variable
+
+    if ($api->count() > 0) {
+        $output .= '<table id="basic_config" class="table align-middle table-bordered">
+            <thead  class="text-dark">  
+                <tr>
+                    <th>Student Number</th>
+                    <th>Name</th>
+                    <th>Grade</th>
+                    <th>Parent</th>
+                    <th>Parent Number</th>
+                    <th>Date</th>
+                    <th>Morning IN</th>
+                    <th>Morning OUT</th>
+                    <th>Afternoon IN</th>
+                    <th>Afternoon OUT</th>
+                </tr>
+            </thead>
+            <tbody>';
+
+            foreach ($api as $rs) {
+            // Convert date to PH time zone
+                $phTime = Carbon::parse($rs->log_date)->format('F d, Y');
+
+                // Format time with AM/PM or display N/A if time is null
+                $amIn = $rs->AM_in ? Carbon::parse($rs->AM_in)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
+                $amOut = $rs->AM_out ? Carbon::parse($rs->AM_out)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
+                $pmIn = $rs->PM_in ? Carbon::parse($rs->PM_in)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
+                $pmOut = $rs->PM_out ? Carbon::parse($rs->PM_out)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
+
+                $output .= '<tr>
+                    <td class="align-items-center"><img style="cursor: pointer;" src="storage/images/' . $rs->Image . '" class="rounded-circle wh-50" onclick="openImageViewer(\'storage/images/' . $rs->Image . '\')"><span class="fw-medium fs-15 ms-3">' . $rs->Student_Number . '</span></td>
+                    <td>' . $rs->Name . '</td>
+                     <td>' . 'Grade ' . $rs->Grade . '</td>
                     <td>' . $rs->Parent_Name . '</td>
                     <td>' . $rs->Parent_Number . '</td>
                     <td>' . $phTime . '</td>
@@ -150,6 +319,7 @@ public function store_student(Request $request) {
         $rules = [
             'student_number' => 'required|unique:students,Student_Number',
             'fullname' => 'required',
+            'email' => 'required',
             'parent_name' => 'required',
             'parent_number' => ['required', new PhilippinePhoneNumber],
             'grade' => 'required',
@@ -168,6 +338,7 @@ public function store_student(Request $request) {
         $empData = [
             'Student_Number' => $validatedData['student_number'],
             'Name' => $validatedData['fullname'],
+            'Email' => $validatedData['email'],
             'Parent_Name' => $validatedData['parent_name'],
             'Parent_Number' => $validatedData['parent_number'],
             'Grade' => $validatedData['grade'],
@@ -179,6 +350,7 @@ public function store_student(Request $request) {
         $rules = [
             'student_number' => 'required',
             'fullname' => 'required',
+            'email' => 'required',
             'parent_name' => 'required',
             'parent_number' => ['required', new PhilippinePhoneNumber],
             'grade' => 'required',
@@ -192,6 +364,7 @@ public function store_student(Request $request) {
         $empData = [
             'Student_Number' => $validatedData['student_number'],
             'Name' => $validatedData['fullname'],
+            'Email' => $validatedData['email'],
             'Parent_Name' => $validatedData['parent_name'],
             'Parent_Number' => $validatedData['parent_number'],
             'Grade' => $validatedData['grade'],
@@ -257,7 +430,7 @@ public function scanner_morning(Request $request)
 // Get the current time in Manila time (PH time) with AM/PM format
 $manilaTime = Carbon::now('Asia/Manila')->format('F d, Y h:i A');
 
-$semaphoreText = "$student->Name ($student->Student_Number), arrived in the school at $manilaTime";
+$semaphoreText = "Ang inyong anak na si $student->Name ($student->Student_Number) ay nakapasok na sa paaralan ng PRMSU Junior Highschool Iba Campus sa oras na $manilaTime";
 
     $ch = curl_init();
 $parameters = array(
@@ -436,7 +609,7 @@ public function scanner_afternoon(Request $request)
 // Get the current time in Manila time (PH time) with AM/PM format
 $manilaTime = Carbon::now('Asia/Manila')->format('F d, Y h:i A');
 
-$semaphoreText = "$student->Name ($student->Student_Number), departed from the school at $manilaTime";
+$semaphoreText = "Ang inyong anak na si $student->Name ($student->Student_Number) ay nakalabas na sa paaralan ng PRMSU Junior Highschool Iba Campus sa oras na $manilaTime";
 
     $ch = curl_init();
 $parameters = array(

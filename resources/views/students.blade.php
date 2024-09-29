@@ -38,6 +38,27 @@
 										</button>
 									</div>                             
                                         <div class="row justify-content-center">
+                                              <div class="mb-3">
+                                                @if(Auth::user()->privilege == 'Administrator')
+                                                    <!-- Show buttons if the user is an admin -->
+                                                    <button class="btn btn-primary" onclick="printGrade('all')">Print All Students</button>
+                                                    <button class="btn btn-primary" onclick="printGrade(7)">Print Grade 7</button>
+                                                    <button class="btn btn-primary" onclick="printGrade(8)">Print Grade 8</button>
+                                                    <button class="btn btn-primary" onclick="printGrade(9)">Print Grade 9</button>
+                                                    <button class="btn btn-primary" onclick="printGrade(10)">Print Grade 10</button>
+                                                @else
+                                                    <!-- Show buttons based on authenticated user's grade -->
+                                                    @if(Auth::check())
+                                                        @php
+                                                            $userGrade = Auth::user()->Grade; // Assuming 'grade' is a field in your users table
+                                                        @endphp
+                                                        <button class="btn btn-primary" onclick="printGrade('{{ $userGrade }}')">Print Grade {{ $userGrade }}</button>
+                                                    @else
+                                                        <!-- Optionally, you can handle cases where the user is not logged in -->
+                                                        <p>Please log in to print grades.</p>
+                                                    @endif
+                                                @endif
+                                            </div>
                                             <div class="global-table-area">
                                                 <div class="table-responsive overflow-auto h-540" id="show_accounts">
                                                 </div>
@@ -73,40 +94,40 @@
                             <div class="modal-body p-4 bg-gray-200">
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="form-group mb-25">
-                                        <label for="exampleFormControlInput1" class="form-label mb-10 fs-14 text-dark fw-semibold">Student Number</label>
-                                        <input type="text" name="student_number" id="student_number" class="form-control" placeholder="Student Number" required>
+                                        <label for="exampleFormControlInput1" class="form-label mb-10 fs-14 text-dark fw-semibold">Student Number *</label>
+                                        <input type="number" name="student_number" id="student_number" class="form-control" placeholder="Student Number" required>
                                     </div>
                                     <div  class="form-group mb-25">
-                                    <label for="name" class="form-label mb-10 fs-14 text-dark fw-semibold">Full Name</label>
+                                    <label for="name" class="form-label mb-10 fs-14 text-dark fw-semibold">Full Name *</label>
                                     <input type="text" name="fullname" id="fullname" class="form-control"  placeholder="Full Name" required>
                                     </div>
+                                    <div  class="form-group mb-25">
+                                    <label for="name" class="form-label mb-10 fs-14 text-dark fw-semibold">Email *</label>
+                                    <input type="email" name="email" id="email" class="form-control"  placeholder="Email" required>
+                                    </div>
                                 </div>
-                                <div class="row">
+                                <div class="row  mb-25">
                                   <div class="col-lg-6">
-                                    <label for="parent_name" class="form-label mb-10 fs-14 text-dark fw-semibold">Parent Name</label>
+                                    <label for="parent_name" class="form-label mb-10 fs-14 text-dark fw-semibold">Parent Name *</label>
                                     <input type="text" name="parent_name" id="parent_name" class="form-control"  placeholder="Parent Name" required>
                                   </div>
                                   <div class="col-lg-6">
-                                    <label for="lname" class="form-label mb-10 fs-14 text-dark fw-semibold">Parent Number</label>
+                                    <label for="lname" class="form-label mb-10 fs-14 text-dark fw-semibold">Parent Number *</label>
                                     <input type="text" name="parent_number" id="parent_number" class="form-control"  placeholder="Parent Number" required>
                                   </div>
                                 </div>
                                     <div class="form-group mb-25">
-                                      <label for="grade" class="form-label mb-10 fs-14 text-dark fw-semibold">Grade</label>
+                                      <label for="grade" class="form-label mb-10 fs-14 text-dark fw-semibold">Grade *</label>
                                       <select name="grade" id="grade" class="form-control" required>
                                           <option value="">Select Grade</option>
-                                          <option value="7">Grade 7</option>
-                                          <option value="8">Grade 8</option>
-                                          <option value="9">Grade 9</option>
-                                          <option value="10">Grade 10</option>
                                       </select>
                                   </div>
                                     <div  class="form-group mb-25">
-                                        <label for="lname" class="form-label mb-10 fs-14 text-dark fw-semibold">Address</label>
+                                        <label for="lname" class="form-label mb-10 fs-14 text-dark fw-semibold">Address *</label>
                                         <input type="text" name="address" id="address" class="form-control"  placeholder="Address" required>
                                     </div>
                                 <div class="form-group mb-25">
-                                    <label for="avatar" class="form-label mb-10 fs-14 text-dark fw-semibold">Select Image</label>
+                                    <label for="avatar" class="form-label mb-10 fs-14 text-dark fw-semibold">Select Image *</label>
                                     <input type="file" name="avatar" id="avatar" class="form-control">
                                 </div>
                                 <div class="avatar-preview rounded-circle">
@@ -142,7 +163,42 @@ aria-hidden="true">
 
         <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
         
-
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            // Fetch user privilege and grade
+            const userPrivilege = '{{ Auth::user()->privilege }}'; // Get privilege
+            const teacherGrade = '{{ Auth::user()->Grade }}'; // Get grade from authenticated user
+        
+            // Function to populate grades based on user privilege
+            function populateGradeOptions() {
+              const gradeSelect = document.getElementById('grade');
+              gradeSelect.innerHTML = ''; // Clear existing options
+              gradeSelect.append(new Option('Select Grade', '')); // Add default option
+        
+              if (userPrivilege === 'Administrator') {
+                // Show all grades for Administrators
+                const allGrades = ['7', '8', '9', '10'];
+                allGrades.forEach(grade => {
+                  gradeSelect.append(new Option(grade, grade));
+                });
+              } else if (userPrivilege === 'Teacher') {
+                // Add the teacher's grade as an option
+                if (teacherGrade) {
+                  gradeSelect.append(new Option(teacherGrade, teacherGrade));
+                } else {
+                  console.warn('No grade found for the teacher:', teacherGrade);
+                }
+              }
+            }
+        
+            populateGradeOptions();
+          });
+        </script>
+        <script>
+          function printGrade(grade) {
+            window.open('/printGrade/' + grade, '_blank'); // Opens the URL in a new tab
+          }
+      </script>
 <script>
   
      // Define openImageViewer function outside of $(document).ready()
@@ -234,6 +290,7 @@ $(document).ready(function() {
           success: function(response) {
             $("#student_number").val(response.Student_Number);
             $("#fullname").val(response.Name);
+            $("#email").val(response.Email);
             $("#parent_name").val(response.Parent_Name);
             $("#parent_number").val(response.Parent_Number);
             $("#grade").val(response.Grade);
@@ -366,6 +423,7 @@ $("#add_employee_form").submit(function(e) {
     $("#student_id").val('');
     $("#student_number").val('');
     $("#fullname").val('');
+    $("#email").val('');
     $("#parent_name").val('');
     $("#parent_number").val('');
     $("#address").val('');
