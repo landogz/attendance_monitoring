@@ -192,11 +192,45 @@
                             }
                         },
                         {
-                            extend: 'print',
-                            text: 'Print',
-                            customize: function(win) {},
-                            orientation: 'landscape' // Set print orientation to landscape
-                        }
+    extend: 'print',
+    text: 'Print',
+    customize: function(win) {
+        // Remove the default title by setting it to an empty string
+        $(win.document.body).find('title').text('');
+
+        // Add custom styles for the print view
+        $(win.document.body)
+            .css('font-size', '12pt') // Change overall font size
+            .prepend(
+                '<div style="text-align: center; display: flex; align-items: center; justify-content: center;">' + // Center-align and flexbox for alignment
+                    '<img src="{{ asset('assets/images/user/user.png') }}" alt="Logo" style="width: 100px; height: auto; margin-right: 10px;"/>' + // Logo
+                    '<div>' + // Wrap school name and details in a div
+                        '<h2 style="margin: 0;font-size: 16pt;">PRMSU Junior High School Department Iba Campus</h2>' + // School name
+                        '<p style="margin: 0;">Palanginan, Iba, Zambales 2212</p>' + // Address line 1
+                        '<p style="margin: 0;">prmsujhsiba@gmail.com</p>' + // Email
+                    '</div>' +
+                '</div><hr>' + // Horizontal line under the header
+                '<h3 style="text-align: center; margin-top: 20px;">Subject Logs</h3>' // Centered title for the logs
+            );
+
+        // Change the font size of the table to be smaller
+        $(win.document.body).find('table')
+            .css({
+                'font-size': '9pt', // Set smaller font size for the table
+                'width': '100%', // Make sure the table takes full width
+                'border-collapse': 'collapse' // Optional: Collapses table borders for better presentation
+            })
+            .find('th, td') // Target both headers and data cells
+            .css({
+                'padding': '5px', // Adjust padding for a compact look
+                'border': '1px solid #ddd' // Optional: Add borders to table cells
+            });
+
+        // Remove any default title content
+        $(win.document.body).find('h1, h4, h5, h6').remove(); // Remove any default headers
+    },
+    orientation: 'landscape' // Set print orientation to landscape
+}
                     ]
                 });
 

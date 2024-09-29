@@ -81,6 +81,7 @@
             <tr>
                 <th>Student Number</th>
                 <th>Full Name</th>
+                <th>Email</th>
                 <th>Parent Name</th>
                 <th>Parent Number</th>
                 <th>Address</th>
@@ -94,6 +95,7 @@
             <tr>
                 <td>{{ $student->Student_Number }}</td>
                 <td>{{ $student->Name }}</td>
+                <td>{{ $student->Email }}</td>
                 <td>{{ $student->Parent_Name }}</td>
                 <td>{{ $student->Parent_Number }}</td>
                 <td>{{ $student->Address }}</td>

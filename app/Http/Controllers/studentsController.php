@@ -178,6 +178,7 @@ if ($user->privilege === 'Administrator') {
                 <tr>
                     <th>Student Number</th>
                     <th>Name</th>
+                    <th>Email</th>
                     <th>Grade</th>
                     <th>Parent</th>
                     <th>Parent Number</th>
@@ -203,6 +204,7 @@ if ($user->privilege === 'Administrator') {
                 $output .= '<tr>
                     <td class="align-items-center"><img style="cursor: pointer;" src="storage/images/' . $rs->Image . '" class="rounded-circle wh-50" onclick="openImageViewer(\'storage/images/' . $rs->Image . '\')"><span class="fw-medium fs-15 ms-3">' . $rs->Student_Number . '</span></td>
                     <td>' . $rs->Name . '</td>
+                     <td>' . $rs->Email . '</td>
                      <td>' . 'Grade ' . $rs->Grade . '</td>
                     <td>' . $rs->Parent_Name . '</td>
                     <td>' . $rs->Parent_Number . '</td>
@@ -265,6 +267,7 @@ if ($user->privilege === 'Administrator') {
                 <tr>
                     <th>Student Number</th>
                     <th>Name</th>
+                    <th>Email</th>
                     <th>Grade</th>
                     <th>Parent</th>
                     <th>Parent Number</th>
@@ -290,6 +293,7 @@ if ($user->privilege === 'Administrator') {
                 $output .= '<tr>
                     <td class="align-items-center"><img style="cursor: pointer;" src="storage/images/' . $rs->Image . '" class="rounded-circle wh-50" onclick="openImageViewer(\'storage/images/' . $rs->Image . '\')"><span class="fw-medium fs-15 ms-3">' . $rs->Student_Number . '</span></td>
                     <td>' . $rs->Name . '</td>
+                     <td>' . $rs->Email . '</td>
                      <td>' . 'Grade ' . $rs->Grade . '</td>
                     <td>' . $rs->Parent_Name . '</td>
                     <td>' . $rs->Parent_Number . '</td>
