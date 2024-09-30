@@ -41,7 +41,7 @@
 									</div>                             
                                         <div class="row justify-content-center">
                                             <div class="global-table-area">
-                                                <div class="table-responsive overflow-auto h-540" id="show_accounts">
+                                                <div class="table-responsive overflow-auto" id="show_accounts">
                                                 </div>
                                             </div>
                                         </div>
