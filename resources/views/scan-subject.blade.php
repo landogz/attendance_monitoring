@@ -32,8 +32,18 @@
                                 <div class="card-footer bg-secondary-transparent border-color p-3 fs-16">
                                     <form action="{{ route('scanner_subject') }}" method="post" id="scanner_form">
                                         @csrf
+
+                                        
+                                         <!-- Radio Buttons for Time Selection -->
+                                    <div class="form-group">
+                                        <label>Select Time:</label><br>
+                                        <label><input type="radio" name="time_action" value="time_in" checked> Time In</label><br>
+                                        <label><input type="radio" name="time_action" value="time_out"> Time Out</label>
+                                    </div>
+                                    
                                         <input type="text" id="scanid" name="scanid" autofocus>
                                         <input hidden type="text" id="subject_id" name="subject_id" value="{{ $subjectData->id }}">
+
                                     </form>
                                 </div>
                                 

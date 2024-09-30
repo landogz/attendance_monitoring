@@ -17,6 +17,7 @@ return new class extends Migration
             $table->integer('student_id')->nullable();
             $table->date('Date')->nullable();
             $table->time('In')->nullable();
+            $table->time('Out')->nullable();
             $table->timestamps(); 
             
     

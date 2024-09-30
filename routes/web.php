@@ -91,6 +91,9 @@ Route::group(['middleware' => 'web'], function () {
         Route::get('/subjects-logs/data', [SubjectsController::class, 'subjects_logs_data'])->name('subjects_logs_data');
 
         
+        Route::delete('/delete_logs', [SubjectsController::class, 'delete_logs'])->name('delete_logs');
+
+        Route::delete('/delete_selected_logs', [SubjectsController::class, 'delete_selected_logs'])->name('delete_selected_logs'); // Route for deleting selected logs
     
     });
 });

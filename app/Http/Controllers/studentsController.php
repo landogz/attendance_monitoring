@@ -321,9 +321,9 @@ public function store_student(Request $request) {
     // Include image validation only if the existing image is empty
     if (empty($request->student_id)) {
         $rules = [
-            'student_number' => 'required|unique:students,Student_Number',
+            'student_number' => ['required', 'unique:students,Student_Number', 'regex:/^\d{2}-\d-\d{4}$/'],
             'fullname' => 'required',
-            'email' => 'required',
+            'email_' => 'required',
             'parent_name' => 'required',
             'parent_number' => ['required', new PhilippinePhoneNumber],
             'grade' => 'required',
@@ -342,7 +342,7 @@ public function store_student(Request $request) {
         $empData = [
             'Student_Number' => $validatedData['student_number'],
             'Name' => $validatedData['fullname'],
-            'Email' => $validatedData['email'],
+            'Email' => $validatedData['email_'],
             'Parent_Name' => $validatedData['parent_name'],
             'Parent_Number' => $validatedData['parent_number'],
             'Grade' => $validatedData['grade'],
@@ -352,9 +352,9 @@ public function store_student(Request $request) {
     } else {
         // Validate the request data for update
         $rules = [
-            'student_number' => 'required',
+            'student_number' => ['required', 'regex:/^\d{2}-\d-\d{4}$/'],
             'fullname' => 'required',
-            'email' => 'required',
+            'email_' => 'required',
             'parent_name' => 'required',
             'parent_number' => ['required', new PhilippinePhoneNumber],
             'grade' => 'required',
@@ -368,7 +368,7 @@ public function store_student(Request $request) {
         $empData = [
             'Student_Number' => $validatedData['student_number'],
             'Name' => $validatedData['fullname'],
-            'Email' => $validatedData['email'],
+            'Email' => $validatedData['email_'],
             'Parent_Name' => $validatedData['parent_name'],
             'Parent_Number' => $validatedData['parent_number'],
             'Grade' => $validatedData['grade'],
@@ -440,7 +440,7 @@ $semaphoreText = "Ang inyong anak na si $student->Name ($student->Student_Number
 $parameters = array(
     'apikey' => $activeApi->api,
     'number' => $student->Parent_Number,
-    'message' => 'Senior Highschool : ' . $semaphoreText,
+    'message' => 'Junior Highschool : ' . $semaphoreText,
     'sendername' => 'LandogzWeb'
 );
 
@@ -619,7 +619,7 @@ $semaphoreText = "Ang inyong anak na si $student->Name ($student->Student_Number
 $parameters = array(
     'apikey' => $activeApi->api,
     'number' => $student->Parent_Number,
-    'message' => 'Senior Highschool : ' . $semaphoreText,
+    'message' => 'Junior Highschool : ' . $semaphoreText,
     'sendername' => 'LandogzWeb'
 );
 

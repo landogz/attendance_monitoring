@@ -94,8 +94,8 @@
                             <div class="modal-body p-4 bg-gray-200">
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="form-group mb-25">
-                                        <label for="exampleFormControlInput1" class="form-label mb-10 fs-14 text-dark fw-semibold">Student Number *</label>
-                                        <input type="number" name="student_number" id="student_number" class="form-control" placeholder="Student Number" required>
+                                        <label for="exampleFormControlInput1" class="form-label mb-10 fs-14 text-dark fw-semibold">Student Number * (Format : 00-0-0000)</label>
+                                        <input type="text" name="student_number" id="student_number" class="form-control" placeholder="Student Number" required maxlength="9">
                                     </div>
                                     <div  class="form-group mb-25">
                                     <label for="name" class="form-label mb-10 fs-14 text-dark fw-semibold">Full Name *</label>
@@ -103,7 +103,7 @@
                                     </div>
                                     <div  class="form-group mb-25">
                                     <label for="name" class="form-label mb-10 fs-14 text-dark fw-semibold">Email *</label>
-                                    <input type="email" name="email" id="email" class="form-control"  placeholder="Email" required>
+                                    <input type="email" name="email_" id="email_" class="form-control"  placeholder="Email" required>
                                     </div>
                                 </div>
                                 <div class="row  mb-25">
@@ -290,7 +290,7 @@ $(document).ready(function() {
           success: function(response) {
             $("#student_number").val(response.Student_Number);
             $("#fullname").val(response.Name);
-            $("#email").val(response.Email);
+            $("#email_").val(response.Email);
             $("#parent_name").val(response.Parent_Name);
             $("#parent_number").val(response.Parent_Number);
             $("#grade").val(response.Grade);
@@ -478,7 +478,7 @@ function generateQRCode(studentId, name,content, elementId, width = 250, height 
         // Open a new tab
         var newTab = window.open();
         var imageTag = '<img src="' + compositeDataURL + '" id="download-image">';
-        var scriptTag = '<' + 'script' + '>document.getElementById("download-image").addEventListener("contextmenu", function(e) { e.preventDefault(); var a = document.createElement("a"); a.href = "' + compositeDataURL + '"; a.download = "' + studentId + '.jpg"; a.click(); });<' + '/script' + '>';
+        var scriptTag = '<' + 'script' + '>document.getElementById("download-image").addEventListener("contextmenu", function(e) { e.preventDefault(); var a = document.createElement("a"); a.href = "' + compositeDataURL + '"; a.download = "' + studentId + '.jpg"; a.click(); }); window.onload = function() {window.print();};<' + '/script' + '>';
         newTab.document.write(imageTag + scriptTag);
         newTab.document.close();
 
@@ -494,6 +494,26 @@ function generateQRCode(studentId, name,content, elementId, width = 250, height 
     });
    
   </script>
+<script>
+  document.getElementById('student_number').addEventListener('input', function (e) {
+      let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+      let formattedValue = '';
+
+      // Format as 21-1-2652
+      if (value.length > 0) {
+          formattedValue += value.substring(0, 2); // First two digits (21)
+      }
+      if (value.length > 2) {
+          formattedValue += '-' + value.substring(2, 3); // Next digit (1)
+      }
+      if (value.length > 3) {
+          formattedValue += '-' + value.substring(3, 7); // Last four digits (2652)
+      }
+
+      e.target.value = formattedValue; // Set the formatted value back to input
+  });
+</script>
+
         	<!--=== Start CopyRight Area ===-->		
 					@include('auth.sub-files.footer')
 			<!--=== End CopyRight Area ===-->

@@ -32,14 +32,15 @@
             </a>
         </li>
 
+        
+        @if(Auth::user()->privilege == 'Teacher')
+        
         <li class="{{ Request::is('subjects') ? ' mm-active' : '' }}">
             <a href="{{ route('subjects') }}" class="menu-title">
                 <span class="icon"><i data-feather="book-open"></i></span>
                 <span class="title">Subjects</span>
             </a>
         </li>
-        
-        @if(Auth::user()->privilege == 'Teacher')
         @endif
     
         <!-- Conditionally hide Login Logs and Settings if the privilege is 'Teacher' -->
