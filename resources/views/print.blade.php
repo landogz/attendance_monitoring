@@ -131,7 +131,7 @@
 
     <script>
         window.onload = function() {
-            window.print();
+        //    window.print();
             // Close the tab after the print dialog has been executed
             window.onafterprint = function() {
                 window.close();
