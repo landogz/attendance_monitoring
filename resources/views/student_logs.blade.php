@@ -146,6 +146,9 @@
         modal.style.display = 'block';
     }
     $(document).ready(function() {
+
+
+
         
  // Set the initial title
  document.title = 'Student Logs';
@@ -200,7 +203,11 @@
                         '<p style="margin: 0;">prmsujhsiba@gmail.com</p>' + // Email
                     '</div>' +
                 '</div><hr>' + // Horizontal line under the header
-                '<h3 style="text-align: center; margin-top: 20px;">Student Logs</h3>' // Centered title for the logs
+                '<h3 style="text-align: center; margin-top: 20px;">Student Logs</h3>'  + // Centered title for the logs
+                // Add printed by information
+                '<div style="text-align: right; margin-top: 10px;">' + // Align to the right
+                    '<span>Printed by: ' + '{{ auth()->user()->name }}</span>' + // User and timestamp
+                '</div>'
             );
 
         // Change the font size of the table to be smaller
@@ -299,7 +306,9 @@
                         '<p style="margin: 0;">prmsujhsiba@gmail.com</p>' + // Email
                     '</div>' +
                 '</div><hr>' + // Horizontal line under the header
-                '<h3 style="text-align: center; margin-top: 20px;">Student Logs</h3>' // Centered title for the logs
+                '<h3 style="text-align: center; margin-top: 20px;">Student Logs</h3>' + // Align to the right
+                    '<span>Printed by: ' + '{{ auth()->user()->name }}</span>' + // User and timestamp
+                '</div>'
             );
 
         // Change the font size of the table to be smaller

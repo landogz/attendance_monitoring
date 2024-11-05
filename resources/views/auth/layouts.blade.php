@@ -18,8 +18,6 @@
 		<link rel="stylesheet" href="{{ asset('assets/css/sweetalert2.min.css')}}">
 		<link rel="stylesheet" href="{{ asset('assets/css/style.css')}}">
 
-
-
 		
 		<!--=== Favicon ===-->
 		<link rel="icon" type="image/png" href="{{ asset('assets/images/favicon.png')}}">

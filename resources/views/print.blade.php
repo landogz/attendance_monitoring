@@ -6,10 +6,15 @@
     <title>Print {{ $grade === 'all' ? 'All Students' : 'Grade' .  $grade }}</title>
     <style>
         /* Add your print styles here */
+        @page {
+            size: 11in 8.5in; /* Letter size in landscape */
+            margin: 0.5in; /* Adjust margin as necessary */
+        }
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
+            padding-bottom: 60px; /* Ensure there's space for the footer */
         }
         .header {
             display: flex;
@@ -52,12 +57,22 @@
         }
         /* Print styles */
         @media print {
-            .header {
-                justify-content: center;
-                margin-bottom: 40px;
-            }
             body {
                 margin: 0;
+            }
+            footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                display: flex;
+                justify-content: space-between; /* Space between left and right */
+                font-size: 12px;
+                padding: 10px;
+                border-top: 1px solid #000;
+            }
+            .pageNumber {
+                margin-left: 0; /* Ensure no margin on the left */
             }
         }
     </style>
@@ -70,6 +85,11 @@
             <p>Palanginan, Iba, Zambales 2212</p> <!-- Replace with your school address -->
             <p>prmsujhsiba@gmail.com</p> <!-- Replace with your contact number -->
         </div>
+    </div>
+
+    <!-- Printed Information Section -->
+    <div style="text-align: left; margin-bottom: 10px;">
+        <span>Printed by:  {{ auth()->user()->name }}</span> <!-- User and timestamp on the right -->
     </div>
 
     <div class="grade-title">
@@ -106,6 +126,9 @@
             @endforeach
         </tbody>
     </table>
+
+ 
+
     <script>
         window.onload = function() {
             window.print();
@@ -113,6 +136,10 @@
             window.onafterprint = function() {
                 window.close();
             };
+
+            // Set the page number (you may need to implement logic to get the actual page number)
+            var pageNum = 1; // Placeholder for page number
+            document.querySelector('.pageNumberText').textContent = pageNum;
         };
     </script>
 </body>

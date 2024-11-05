@@ -10,7 +10,14 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css">
 
 		<!--=== End Sidebar Menu Area ===-->
+<style>
+    .checkbox-large {
+    transform: scale(1.5); /* Adjust the scale factor to your preference */
+    margin-right: 10px; /* Optional: space between checkbox and label */
+    cursor: pointer; /* Change cursor to pointer when hovering */
+}
 
+</style>
 		<!--=== Start Main Content Area ===-->
 		<div class="main-content-area">
 			<div class="container-fluid">
@@ -38,16 +45,19 @@
 										<div class="d-flex align-items-center">
 											<h4 class="mb-0 ms-2 fs-16">List of Subject Logs</h4>
 										</div>
+                                        <div id="logCount" class="mb-3"></div>
 									</div>  
                                     <div class="form-group mb-25">
-                                        <label for="subjectDropdown" class="form-label mb-10 fs-14 text-dark fw-semibold">Select Subject *</label>
-                                        <div class="d-flex align-items-end">
-                                            <select name="subject_id" id="subjectDropdown" class="form-control me-3" required style="width: auto;">
-                                                <option value="">Select Subject</option>
-                                                @foreach ($subjects as $subject)
-                                                    <option value="{{ $subject->id }}">{{ $subject->Subject_Name }}</option>
-                                                @endforeach
-                                            </select>
+                                        <div class="d-flex align-items-end">                                            
+                                            <div class="me-3">
+                                                <label for="startDate" class="form-label mb-0">Select Subject *</label>
+                                                <select name="subject_id" id="subjectDropdown" class="form-control me-3" required style="width: auto;">
+                                                    <option value="">Select Subject</option>
+                                                    @foreach ($subjects as $subject)
+                                                        <option value="{{ $subject->id }}">{{ $subject->Subject_Name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
                                     
                                             <div class="me-3">
                                                 <label for="startDate" class="form-label mb-0">Start Date *</label>
@@ -58,8 +68,15 @@
                                                 <label for="endDate" class="form-label mb-0">End Date *</label>
                                                 <input type="date" id="endDate" class="form-control" required>
                                             </div>
+                                            <button type="button" id="clearAll" class="btn btn-secondary"><i class="fa-solid fa-arrows-rotate"></i> Clear All</button>&nbsp;
 
-                                            <button type="button" id="clearAll" class="btn btn-secondary">Clear All</button>
+                                            @if(Auth::user()->privilege == 'Teacher')
+                                                {{-- <button type="button" id="deleteAll" class="btn btn-danger deletelogs"><i data-feather="trash-2"></i> Delete All Logs</button>&nbsp;
+                                                <button type="button" id="deleteSelectedLogs" class="btn btn-danger">
+                                                    <i data-feather="trash"></i> Delete Selected
+                                                </button> --}}
+                                            @endif
+
                                         </div>
                                     </div>
                                     
@@ -87,11 +104,110 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
         <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
-        
-
+     
 <script>
     $(document).ready(function() {
-        
+
+        $('#deleteSelectedLogs').on('click', function() {
+    const selectedIds = [];
+    $('.select-row:checked').each(function() {
+        selectedIds.push($(this).val());
+    });
+
+    if (selectedIds.length > 0) {
+        // Show a confirmation dialog
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'This action cannot be undone!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Send DELETE request to the backend using AJAX
+                $.ajax({
+                    url: '{{ route("delete_selected_logs") }}', // Use the defined route
+                    type: 'DELETE',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ ids: selectedIds }), // Pass the selected IDs
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    success: function(data) {
+                        if (data.status === 200) {
+                            // Refresh the table or remove the deleted rows
+                            Swal.fire('Deleted!', data.message, 'success');
+                            fetchAllData();  
+                        } else {
+                            Swal.fire('Error!', data.message, 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error:', xhr);
+                        Swal.fire('Error!', 'An error occurred while deleting.', 'error');
+                    }
+                });
+            }
+        });
+    } else {
+        Swal.fire('Warning!', 'Please select at least one record to delete.', 'warning');
+    }
+});
+
+
+
+        $(document).on('click', '.deletelogs', function(e) {
+    e.preventDefault();
+    let csrf = '{{ csrf_token() }}';
+    
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '{{ route('delete_logs') }}',  // Call delete_logs route without an ID
+                method: 'DELETE',
+                data: {
+                    _token: csrf  // CSRF token for security
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire(
+                            'Deleted!',
+                            response.message,
+                            'success'
+                        )
+                        fetchAllData();  // Refresh or reload the data
+                    } else {
+                        Swal.fire(
+                            'Error!',
+                            response.message,
+                            'error'
+                        );
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire(
+                        'Error!',
+                        'There was an error deleting the logs. Please try again later.',
+                        'error'
+                    );
+                }
+            });
+        }
+    });
+});
+
+
  // Set the initial title
  document.title = 'Subject Logs';
 
@@ -103,7 +219,8 @@
             url: '{{ route('subjects_logs_data') }}',
             method: 'get',
             success: function(response) {
-                $("#show_accounts").html(response);
+                $("#show_accounts").html(response.html); // Set the HTML response
+            $("#logCount").html(response.badge); // Set the badge HTML based on log count
                 var table = $("#basic_config").DataTable({
                     order: [[0, 'asc']], // Order by the first column in ascending order
                     dom: 'Bfrtip', // Show buttons for export
@@ -145,7 +262,11 @@
                         '<p style="margin: 0;">prmsujhsiba@gmail.com</p>' + // Email
                     '</div>' +
                 '</div><hr>' + // Horizontal line under the header
-                '<h3 style="text-align: center; margin-top: 20px;">Student Logs</h3>' // Centered title for the logs
+                '<h3 style="text-align: center; margin-top: 20px;">Subject Logs</h3>' + // Centered title for the logs
+                // Add printed by information
+                '<div style="text-align: left; margin-top: 10px;">' + // Align to the right
+                    '<span>Printed by: ' + '{{ auth()->user()->name }} | No Time In Count : ' + response.na_count + '</span>' + // User and N/A count
+                '</div>'
             );
 
         // Change the font size of the table to be smaller
@@ -202,7 +323,10 @@
                 end_date: endDate // Send the end date
             },
             success: function(response) {
-                $("#show_accounts").html(response);
+                $("#show_accounts").html(response.html); // Set the HTML response
+            $("#logCount").html(response.badge); // Set the badge HTML based on log count
+
+
                 var table = $("#basic_config").DataTable({
                     order: [[0, 'asc']], // Order by the first column in ascending order
                     dom: 'Bfrtip', // Show buttons for export
@@ -242,7 +366,11 @@
                         '<p style="margin: 0;">prmsujhsiba@gmail.com</p>' + // Email
                     '</div>' +
                 '</div><hr>' + // Horizontal line under the header
-                '<h3 style="text-align: center; margin-top: 20px;">Student Logs</h3>' // Centered title for the logs
+                '<h3 style="text-align: center; margin-top: 20px;">Subject Logs</h3>' + // Centered title for the logs
+                // Add printed by information
+                '<div style="text-align: left; margin-top: 10px;">' + // Align to the right
+                    '<span>Printed by: ' + '{{ auth()->user()->name }} | No Time In Count : ' + response.na_count + '</span>' + // User and N/A count
+                '</div>'
             );
 
         // Change the font size of the table to be smaller
@@ -285,6 +413,7 @@
     });
    
   </script>
+   
         	<!--=== Start CopyRight Area ===-->		
 					@include('auth.sub-files.footer')
 			<!--=== End CopyRight Area ===-->

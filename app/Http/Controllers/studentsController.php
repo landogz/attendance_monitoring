@@ -13,6 +13,7 @@ use App\Rules\PhilippinePhoneNumber;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http; 
 use Illuminate\Support\Facades\Auth; // Import Auth facade
+use Maatwebsite\Excel\Facades\Excel;
 
 class studentsController extends Controller
 {
@@ -23,6 +24,56 @@ class studentsController extends Controller
   public function student_logs(){
     return view('student_logs');
 }
+
+public function importStudents(Request $request)
+{
+
+    try {
+    // Validate that the uploaded file is required and is an Excel file
+    $request->validate([
+        'file' => 'required|mimes:xlsx,csv'
+    ]);
+
+    // Load the Excel file
+    $file = $request->file('file');
+    $importData = Excel::toArray([], $file);
+
+// Check if the data exists and is in the expected format
+if (isset($importData[0])) {
+    // Skip the header row (index 0) and start from index 1
+    foreach (array_slice($importData[0], 1) as $row) {
+        // Map data using indices based on the format
+        $studentNumber = $row[0];
+        $fullname = $row[1];
+        $email = $row[2];
+        $parentName = $row[3];
+        $parentNumber = $row[4];
+        $grade = $row[5];
+        $address = $row[6];
+
+        // Check if the student number already exists in the database
+        if (!students::where('Student_Number', $studentNumber)->exists()) {
+            // Add the student if the student_number doesn't exist
+            students::create([
+                'Student_Number' => $studentNumber,
+                'Name' => $fullname, 
+                'Email' =>$email ,
+                'Parent_Name' => $parentName,
+                'Parent_Number' => $parentNumber,
+                'Grade' => $grade,
+                'Address' => $address,
+            ]);
+        }
+    }
+}
+
+return response()->json(['status' => 'success', 'message' => 'Students imported successfully!']);
+
+} catch (\Exception $e) {
+    return response()->json(['status' => 'error', 'message' => 'Import failed: ' . $e->getMessage()], 500);
+}
+}
+
 
 public function printGrade($grade)
 {
@@ -50,7 +101,7 @@ public function fetchAccounts() {
      $user = Auth::user();
 
      // Check if the user is an Administrator or a Teacher
-     if ($user->privilege === 'Administrator') {
+     if ($user->privilege === 'Administrator' || $user->privilege === 'Principal') {
          // Administrator: Get all students
          $api = DB::table('students')->get();
      } else if ($user->privilege === 'Teacher') {
@@ -135,7 +186,7 @@ $baseQuery = DB::table('students')
     ->orderBy('log_date', 'asc'); // Order by log_date in ascending order
 
 // If user is Administrator, get all logs
-if ($user->privilege === 'Administrator') {
+if ($user->privilege === 'Administrator' || $user->privilege === 'Principal') {
     // Apply date range filter based on log_date
     if ($startDate1 && $endDate1) {
         $baseQuery->whereBetween(DB::raw('COALESCE(table_logs.Date, all_dates.Date)'), [$startDate1, $endDate1]);
@@ -192,20 +243,46 @@ if ($user->privilege === 'Administrator') {
             <tbody>';
 
             foreach ($api as $rs) {
-            // Convert date to PH time zone
+                // Convert date to PH time zone
                 $phTime = Carbon::parse($rs->log_date)->format('F d, Y');
-
-                // Format time with AM/PM or display N/A if time is null
-                $amIn = $rs->AM_in ? Carbon::parse($rs->AM_in)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
-                $amOut = $rs->AM_out ? Carbon::parse($rs->AM_out)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
-                $pmIn = $rs->PM_in ? Carbon::parse($rs->PM_in)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
-                $pmOut = $rs->PM_out ? Carbon::parse($rs->PM_out)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
-
+    
+                // Format AM_IN
+                if (is_null($rs->AM_in)) {
+                    $amIn = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>'; // If AM_IN is null
+                } else {
+                    $amIn = Carbon::parse($rs->AM_in)->format('h:i A'); // Format AM_IN if not null
+                }
+    
+                // Format AM_OUT
+                if (is_null($rs->AM_in)) {
+                    $amOut = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>'; // If AM_IN is null, AM_OUT is also N/A
+                } elseif (is_null($rs->AM_out)) {
+                    $amOut = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-warning">Cutting</span>'; // If AM_OUT is null but AM_IN is not
+                } else {
+                    $amOut = Carbon::parse($rs->AM_out)->format('h:i A'); // Format AM_OUT if not null
+                }
+    
+                // Format PM_IN
+                if (is_null($rs->PM_in)) {
+                    $pmIn = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>'; // If PM_IN is null
+                } else {
+                    $pmIn = Carbon::parse($rs->PM_in)->format('h:i A'); // Format PM_IN if not null
+                }
+    
+                // Format PM_OUT
+                if (is_null($rs->PM_in)) {
+                    $pmOut = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>'; // If PM_IN is null, PM_OUT is also N/A
+                } elseif (is_null($rs->PM_out)) {
+                    $pmOut = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-warning">Cutting</span>'; // If PM_OUT is null but PM_IN is not
+                } else {
+                    $pmOut = Carbon::parse($rs->PM_out)->format('h:i A'); // Format PM_OUT if not null
+                }
+    
                 $output .= '<tr>
                     <td class="align-items-center"><img style="cursor: pointer;" src="storage/images/' . $rs->Image . '" class="rounded-circle wh-50" onclick="openImageViewer(\'storage/images/' . $rs->Image . '\')"><span class="fw-medium fs-15 ms-3">' . $rs->Student_Number . '</span></td>
                     <td>' . $rs->Name . '</td>
-                     <td>' . $rs->Email . '</td>
-                     <td>' . 'Grade ' . $rs->Grade . '</td>
+                    <td>' . $rs->Email . '</td>
+                    <td>' . 'Grade ' . $rs->Grade . '</td>
                     <td>' . $rs->Parent_Name . '</td>
                     <td>' . $rs->Parent_Number . '</td>
                     <td>' . $phTime . '</td>
@@ -244,7 +321,7 @@ $baseQuery = DB::table('students')
     ->orderBy('log_date', 'asc'); // Order by log_date in ascending order
 
 // If user is Administrator, get all logs
-if ($user->privilege === 'Administrator') {
+if ($user->privilege === 'Administrator'  || $user->privilege === 'Principal') {
     // Apply date range filter based on log_date
     
     $api = $baseQuery->get();
@@ -281,20 +358,46 @@ if ($user->privilege === 'Administrator') {
             <tbody>';
 
             foreach ($api as $rs) {
-            // Convert date to PH time zone
+                // Convert date to PH time zone
                 $phTime = Carbon::parse($rs->log_date)->format('F d, Y');
-
-                // Format time with AM/PM or display N/A if time is null
-                $amIn = $rs->AM_in ? Carbon::parse($rs->AM_in)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
-                $amOut = $rs->AM_out ? Carbon::parse($rs->AM_out)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
-                $pmIn = $rs->PM_in ? Carbon::parse($rs->PM_in)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
-                $pmOut = $rs->PM_out ? Carbon::parse($rs->PM_out)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
-
+    
+                // Format AM_IN
+                if (is_null($rs->AM_in)) {
+                    $amIn = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>'; // If AM_IN is null
+                } else {
+                    $amIn = Carbon::parse($rs->AM_in)->format('h:i A'); // Format AM_IN if not null
+                }
+    
+                // Format AM_OUT
+                if (is_null($rs->AM_in)) {
+                    $amOut = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>'; // If AM_IN is null, AM_OUT is also N/A
+                } elseif (is_null($rs->AM_out)) {
+                    $amOut = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-warning">Cutting</span>'; // If AM_OUT is null but AM_IN is not
+                } else {
+                    $amOut = Carbon::parse($rs->AM_out)->format('h:i A'); // Format AM_OUT if not null
+                }
+    
+                // Format PM_IN
+                if (is_null($rs->PM_in)) {
+                    $pmIn = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>'; // If PM_IN is null
+                } else {
+                    $pmIn = Carbon::parse($rs->PM_in)->format('h:i A'); // Format PM_IN if not null
+                }
+    
+                // Format PM_OUT
+                if (is_null($rs->PM_in)) {
+                    $pmOut = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>'; // If PM_IN is null, PM_OUT is also N/A
+                } elseif (is_null($rs->PM_out)) {
+                    $pmOut = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-warning">Cutting</span>'; // If PM_OUT is null but PM_IN is not
+                } else {
+                    $pmOut = Carbon::parse($rs->PM_out)->format('h:i A'); // Format PM_OUT if not null
+                }
+    
                 $output .= '<tr>
                     <td class="align-items-center"><img style="cursor: pointer;" src="storage/images/' . $rs->Image . '" class="rounded-circle wh-50" onclick="openImageViewer(\'storage/images/' . $rs->Image . '\')"><span class="fw-medium fs-15 ms-3">' . $rs->Student_Number . '</span></td>
                     <td>' . $rs->Name . '</td>
-                     <td>' . $rs->Email . '</td>
-                     <td>' . 'Grade ' . $rs->Grade . '</td>
+                    <td>' . $rs->Email . '</td>
+                    <td>' . 'Grade ' . $rs->Grade . '</td>
                     <td>' . $rs->Parent_Name . '</td>
                     <td>' . $rs->Parent_Number . '</td>
                     <td>' . $phTime . '</td>
@@ -304,6 +407,7 @@ if ($user->privilege === 'Administrator') {
                     <td>' . $pmOut . '</td>
                 </tr>';
             }
+    
             
 
         $output .= '</tbody></table>';
@@ -321,9 +425,9 @@ public function store_student(Request $request) {
     // Include image validation only if the existing image is empty
     if (empty($request->student_id)) {
         $rules = [
-            'student_number' => 'required|unique:students,Student_Number',
+            'student_number' => ['required', 'unique:students,Student_Number', 'regex:/^\d{2}-\d-\d{4}$/'],
             'fullname' => 'required',
-            'email' => 'required',
+            'email_' => 'required',
             'parent_name' => 'required',
             'parent_number' => ['required', new PhilippinePhoneNumber],
             'grade' => 'required',
@@ -342,7 +446,7 @@ public function store_student(Request $request) {
         $empData = [
             'Student_Number' => $validatedData['student_number'],
             'Name' => $validatedData['fullname'],
-            'Email' => $validatedData['email'],
+            'Email' => $validatedData['email_'],
             'Parent_Name' => $validatedData['parent_name'],
             'Parent_Number' => $validatedData['parent_number'],
             'Grade' => $validatedData['grade'],
@@ -352,9 +456,9 @@ public function store_student(Request $request) {
     } else {
         // Validate the request data for update
         $rules = [
-            'student_number' => 'required',
+            'student_number' => ['required', 'regex:/^\d{2}-\d-\d{4}$/'],
             'fullname' => 'required',
-            'email' => 'required',
+            'email_' => 'required',
             'parent_name' => 'required',
             'parent_number' => ['required', new PhilippinePhoneNumber],
             'grade' => 'required',
@@ -368,7 +472,7 @@ public function store_student(Request $request) {
         $empData = [
             'Student_Number' => $validatedData['student_number'],
             'Name' => $validatedData['fullname'],
-            'Email' => $validatedData['email'],
+            'Email' => $validatedData['email_'],
             'Parent_Name' => $validatedData['parent_name'],
             'Parent_Number' => $validatedData['parent_number'],
             'Grade' => $validatedData['grade'],
@@ -440,8 +544,8 @@ $semaphoreText = "Ang inyong anak na si $student->Name ($student->Student_Number
 $parameters = array(
     'apikey' => $activeApi->api,
     'number' => $student->Parent_Number,
-    'message' => 'Senior Highschool : ' . $semaphoreText,
-    'sendername' => 'LandogzWeb'
+    'message' => 'Junior Highschool : ' . $semaphoreText,
+    'sendername' => 'PRMSU'
 );
 
 
@@ -619,8 +723,8 @@ $semaphoreText = "Ang inyong anak na si $student->Name ($student->Student_Number
 $parameters = array(
     'apikey' => $activeApi->api,
     'number' => $student->Parent_Number,
-    'message' => 'Senior Highschool : ' . $semaphoreText,
-    'sendername' => 'LandogzWeb'
+    'message' => 'Junior Highschool : ' . $semaphoreText,
+    'sendername' => 'PRMSU'
 );
 
 

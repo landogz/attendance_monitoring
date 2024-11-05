@@ -28,7 +28,6 @@ class SMSApiController extends Controller
                 <tr>
                     <th>ID</th>
                     <th>Account ID</th>
-                    <th>Account Name</th>
                     <th>Account Status</th>
                     <th>Credit Balance</th>
                     <th>API</th>
@@ -42,7 +41,6 @@ class SMSApiController extends Controller
             $output .= '<tr>
                 <td>' . $rs->id . '</td>
                 <td>' . $rs->account_id . '</td>
-                <td>' . $rs->account_name . '</td>
                 <td>' . $rs->status . '</td>
                 <td>' . $rs->credit_balance . '</td>
                 <td>' . $rs->api . '</td>

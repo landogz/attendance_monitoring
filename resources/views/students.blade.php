@@ -29,17 +29,25 @@
 						<div class="col-lg-12 mb-24">
 							<div class="card rounded-3 border-0 h-100">
 								<div class="card-body p-25">
-									<div class="d-flex justify-content-between align-items-center border-bottom border-color pb-25 mb-25">
-										<div class="d-flex align-items-center">
-											<h4 class="mb-0 ms-2 fs-16">List of Students</h4>
-										</div>
-                      <button class="btn btn-primary rounded-2 btn-primary-transparent px-3" type="button" data-bs-toggle="modal" data-bs-target="#addstudent" id="new_student">
-											<span class="d-none d-sm-block ms-0">New Student</span>
-										</button>
-									</div>                             
+                  <div class="d-flex justify-content-between align-items-center border-bottom border-color pb-25 mb-25">
+                    <div class="d-flex align-items-center">
+                      <h4 class="mb-0 ms-2 fs-16">List of Students</h4>
+                    </div>
+                    @if(Auth::user()->privilege != 'Principal')
+                    <div class="d-flex justify-content-end">
+                      <button class="btn btn-primary rounded-2 btn-primary px-3 me-2" type="button" data-bs-toggle="modal" data-bs-target="#addstudent" id="new_student">
+                        <span class="d-none d-sm-block ms-0">New Student</span>
+                      </button>
+                      <button class="btn btn-primary rounded-2" type="button" data-bs-toggle="modal" data-bs-target="#importStudentsModal">
+                        Import from Excel
+                      </button>
+                    </div>
+                    @endif
+                  </div>
+                                               
                                         <div class="row justify-content-center">
                                               <div class="mb-3">
-                                                @if(Auth::user()->privilege == 'Administrator')
+                                                @if(Auth::user()->privilege == 'Administrator' && Auth::user()->privilege != 'Principal')
                                                     <!-- Show buttons if the user is an admin -->
                                                     <button class="btn btn-primary" onclick="printGrade('all')">Print All Students</button>
                                                     <button class="btn btn-primary" onclick="printGrade(7)">Print Grade 7</button>
@@ -52,7 +60,9 @@
                                                         @php
                                                             $userGrade = Auth::user()->Grade; // Assuming 'grade' is a field in your users table
                                                         @endphp
+                                                         @if(Auth::user()->privilege != 'Principal')
                                                         <button class="btn btn-primary" onclick="printGrade('{{ $userGrade }}')">Print Grade {{ $userGrade }}</button>
+                                                        @endif
                                                     @else
                                                         <!-- Optionally, you can handle cases where the user is not logged in -->
                                                         <p>Please log in to print grades.</p>
@@ -60,7 +70,7 @@
                                                 @endif
                                             </div>
                                             <div class="global-table-area">
-                                                <div class="table-responsive overflow-auto h-540" id="show_accounts">
+                                                <div class="table-responsive overflow-auto" id="show_accounts">
                                                 </div>
                                             </div>
                                         </div>
@@ -94,40 +104,40 @@
                             <div class="modal-body p-4 bg-gray-200">
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="form-group mb-25">
-                                        <label for="exampleFormControlInput1" class="form-label mb-10 fs-14 text-dark fw-semibold">Student Number *</label>
-                                        <input type="number" name="student_number" id="student_number" class="form-control" placeholder="Student Number" required>
+                                        <label for="exampleFormControlInput1" class="form-label mb-10 fs-14 text-dark fw-semibold">Student Number <span style="color: red">*</span> (Format : 00-0-0000)</label>
+                                        <input type="text" name="student_number" id="student_number" class="form-control" placeholder="Student Number" required maxlength="9">
                                     </div>
                                     <div  class="form-group mb-25">
-                                    <label for="name" class="form-label mb-10 fs-14 text-dark fw-semibold">Full Name *</label>
+                                    <label for="name" class="form-label mb-10 fs-14 text-dark fw-semibold">Full Name <span style="color: red">*</span></label>
                                     <input type="text" name="fullname" id="fullname" class="form-control"  placeholder="Full Name" required>
                                     </div>
                                     <div  class="form-group mb-25">
-                                    <label for="name" class="form-label mb-10 fs-14 text-dark fw-semibold">Email *</label>
-                                    <input type="email" name="email" id="email" class="form-control"  placeholder="Email" required>
+                                    <label for="name" class="form-label mb-10 fs-14 text-dark fw-semibold">Email <span style="color: red">*</span></label>
+                                    <input type="email" name="email_" id="email_" class="form-control"  placeholder="Email" required>
                                     </div>
                                 </div>
                                 <div class="row  mb-25">
                                   <div class="col-lg-6">
-                                    <label for="parent_name" class="form-label mb-10 fs-14 text-dark fw-semibold">Parent Name *</label>
+                                    <label for="parent_name" class="form-label mb-10 fs-14 text-dark fw-semibold">Parent Name <span style="color: red">*</span></label>
                                     <input type="text" name="parent_name" id="parent_name" class="form-control"  placeholder="Parent Name" required>
                                   </div>
                                   <div class="col-lg-6">
-                                    <label for="lname" class="form-label mb-10 fs-14 text-dark fw-semibold">Parent Number *</label>
+                                    <label for="lname" class="form-label mb-10 fs-14 text-dark fw-semibold">Parent Number <span style="color: red">*</span></label>
                                     <input type="text" name="parent_number" id="parent_number" class="form-control"  placeholder="Parent Number" required>
                                   </div>
                                 </div>
                                     <div class="form-group mb-25">
-                                      <label for="grade" class="form-label mb-10 fs-14 text-dark fw-semibold">Grade *</label>
+                                      <label for="grade" class="form-label mb-10 fs-14 text-dark fw-semibold">Grade <span style="color: red">*</span></label>
                                       <select name="grade" id="grade" class="form-control" required>
                                           <option value="">Select Grade</option>
                                       </select>
                                   </div>
                                     <div  class="form-group mb-25">
-                                        <label for="lname" class="form-label mb-10 fs-14 text-dark fw-semibold">Address *</label>
+                                        <label for="lname" class="form-label mb-10 fs-14 text-dark fw-semibold">Address <span style="color: red">*</span></label>
                                         <input type="text" name="address" id="address" class="form-control"  placeholder="Address" required>
                                     </div>
                                 <div class="form-group mb-25">
-                                    <label for="avatar" class="form-label mb-10 fs-14 text-dark fw-semibold">Select Image *</label>
+                                    <label for="avatar" class="form-label mb-10 fs-14 text-dark fw-semibold">Select Image <span style="color: red">*</span></label>
                                     <input type="file" name="avatar" id="avatar" class="form-control">
                                 </div>
                                 <div class="avatar-preview rounded-circle">
@@ -147,6 +157,34 @@
 	</div>
 
 
+
+<!-- Import Students Modal -->
+<div class="modal fade" id="importStudentsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="importStudentsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="importStudentsLabel">Import Students from Excel</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="importForm" enctype="multipart/form-data">
+                  @csrf
+                  <div class="form-group mb-3">
+                      <label for="file" class="form-label">Upload Excel File</label>
+                      <input type="file" name="file" id="file" class="form-control" accept=".xlsx, .csv" required>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="importButton" class="btn btn-primary">Import Students</button>
+                </div>
+              </form>
+          </div>
+      </div>
+  </div>
+</div>
+
+
+
         {{-- new student modal --}}
 <div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="exampleModalLabel" data-bs-backdrop="static"
 aria-hidden="true">
@@ -164,6 +202,7 @@ aria-hidden="true">
         <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
         
         <script>
+        
           document.addEventListener('DOMContentLoaded', function() {
             // Fetch user privilege and grade
             const userPrivilege = '{{ Auth::user()->privilege }}'; // Get privilege
@@ -290,7 +329,7 @@ $(document).ready(function() {
           success: function(response) {
             $("#student_number").val(response.Student_Number);
             $("#fullname").val(response.Name);
-            $("#email").val(response.Email);
+            $("#email_").val(response.Email);
             $("#parent_name").val(response.Parent_Name);
             $("#parent_number").val(response.Parent_Number);
             $("#grade").val(response.Grade);
@@ -434,66 +473,156 @@ $("#add_employee_form").submit(function(e) {
     // If you have custom input file styling, you may need to reset it separately
     $("#avatar").next('.custom-file-label').html('Choose file');
 }
-
 // Define a function to generate a QR code
-function generateQRCode(studentId, name,content, elementId, width = 250, height = 250) {
-        var qr = new QRCode(document.getElementById('qrcode'), {
-            text: content,
-            width: width,
-            height: height,
-            colorDark: '#000000',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.H // Error correction level
-        });
+function generateQRCode(studentId, name, content, elementId, width = 250, height = 250) {
+    // Clear any previous QR code by removing the child nodes from the element
+    var qrElement = document.getElementById('qrcode');
+    qrElement.innerHTML = ''; // Clear the QR code container
 
-         // Get the data URL of the generated QR code
-         var qrDataURL = qr._el.firstChild.toDataURL();
+    // Create a new QRCode instance
+    var qr = new QRCode(qrElement, {
+        text: content,
+        width: width,
+        height: height,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H // Error correction level
+    });
 
-         // Create a new HTML canvas element
-    var canvas = document.createElement('canvas');
-    var ctx = canvas.getContext('2d');
+    // Wait until the QR code is fully rendered and then proceed
+    setTimeout(function() {
+        // Get the data URL of the generated QR code
+        var qrDataURL = qrElement.querySelector('canvas').toDataURL();
 
-    // Set canvas dimensions
-    canvas.width = width;
-    canvas.height = height + 40; // Add extra space for text
+        // Create a new HTML canvas element for combining QR and text
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
 
-    // Create a new image object for the QR code
-    var qrImage = new Image();
-    qrImage.onload = function() {
-        // Draw the QR code image onto the canvas
-        ctx.drawImage(qrImage, 0, 0);
+        // Set canvas dimensions
+        canvas.width = width;
+        canvas.height = height + 40; // Extra space for student details
 
-        // Set font and text color for the student ID and name    
-        ctx.font = 'bold 15px Arial'; // Changed to bold
-        ctx.fillStyle = '#000000';
-        ctx.textAlign = 'center'; // Center the text horizontally
+        // Create a new image object for the QR code
+        var qrImage = new Image();
+        qrImage.onload = function() {
+            // Draw the QR code onto the canvas
+            ctx.drawImage(qrImage, 0, 0);
 
-        // Draw the student ID and name below the QR code
-        ctx.fillText(studentId, width / 2, height + 20);
-        ctx.fillText(name, width / 2, height + 40);
+            // Set font and style for the student details
+            ctx.font = 'bold 15px Arial';
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'center';
 
-        // Get the data URL of the composite image
-        var compositeDataURL = canvas.toDataURL();
+            // Draw student ID and name below the QR code
+            ctx.fillText(studentId, width / 2, height + 20);
+            ctx.fillText(name, width / 2, height + 40);
 
-        // Open a new tab
-        var newTab = window.open();
-        var imageTag = '<img src="' + compositeDataURL + '" id="download-image">';
-        var scriptTag = '<' + 'script' + '>document.getElementById("download-image").addEventListener("contextmenu", function(e) { e.preventDefault(); var a = document.createElement("a"); a.href = "' + compositeDataURL + '"; a.download = "' + studentId + '.jpg"; a.click(); });<' + '/script' + '>';
-        newTab.document.write(imageTag + scriptTag);
-        newTab.document.close();
+            // Get the data URL of the combined image
+            var compositeDataURL = canvas.toDataURL();
 
-        // Close the new tab
-        newTab.document.close();
-    };
-    qrImage.src = qrDataURL;
+            // Open a new tab and display the generated image
+            var newTab = window.open();
+            var imageTag = '<img src="' + compositeDataURL + '" id="download-image">';
+            var scriptTag = '<' + 'script' + '>document.getElementById("download-image").addEventListener("contextmenu", function(e) { e.preventDefault(); var a = document.createElement("a"); a.href = "' + compositeDataURL + '"; a.download = "' + studentId + '.jpg"; a.click(); }); window.onload = function() {window.print();};<' + '/script' + '>';
+            newTab.document.write(imageTag + scriptTag);
+            newTab.document.close();
 
-    }
+            // Close the new tab
+            newTab.document.close();
+        };
+        qrImage.src = qrDataURL;
 
+    }, 500); // Add a short delay to ensure QR code generation is complete
+}
+
+
+    
 
              
     });
    
   </script>
+<script>
+  document.getElementById('student_number').addEventListener('input', function (e) {
+      let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+      let formattedValue = '';
+
+      // Format as 21-1-2652
+      if (value.length > 0) {
+          formattedValue += value.substring(0, 2); // First two digits (21)
+      }
+      if (value.length > 2) {
+          formattedValue += '-' + value.substring(2, 3); // Next digit (1)
+      }
+      if (value.length > 3) {
+          formattedValue += '-' + value.substring(3, 7); // Last four digits (2652)
+      }
+
+      e.target.value = formattedValue; // Set the formatted value back to input
+  });
+
+
+  $('#importButton').on('click', function(event) {
+        event.preventDefault();
+
+        // Create a FormData object
+        let formData = new FormData(document.getElementById('importForm'));
+
+        // AJAX request
+        $.ajax({
+            url: "{{ route('students.import') }}",
+            type: "POST",
+            data: formData,
+            contentType: false,
+            processData: false,
+            headers: {
+                'X-CSRF-TOKEN': $('input[name="_token"]').val() // Include CSRF token
+            },
+            beforeSend: function() {
+                Swal.fire({
+                    title: 'Importing...',
+                    text: 'Please wait while the students are being imported.',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            },
+            success: function(response) {
+              $('#importStudentsModal').modal('hide');
+               // Notify user of success
+               Swal.fire({
+                    icon: 'success',
+                    title: 'Import Successful',
+                    text: response.message || 'Students imported successfully!',
+                    showConfirmButton: true
+                }).then(() => {
+                  // Call the fetchAllData function after the alert is confirmed
+                  $.ajax({
+          url: '{{ route('fetchAccounts') }}',
+          method: 'get',
+          success: function(response) {
+            $("#show_accounts").html(response);
+            $("#basic_config").DataTable({
+              order: [[0, 'asc']], // Order by the first column in descending order
+            });
+          }
+        });
+                });
+            },
+            error: function(xhr, status, error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Import Failed',
+                    text: xhr.responseJSON?.message || 'An error occurred during import. Please try again.',
+                    showConfirmButton: true
+                });
+            }
+        });
+    });
+</script>
+
         	<!--=== Start CopyRight Area ===-->		
 					@include('auth.sub-files.footer')
 			<!--=== End CopyRight Area ===-->

@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('sms_apis', function (Blueprint $table) {
             $table->id();
-            $table->string('api');
-            $table->string('account_id');
-            $table->string('account_name');
-            $table->string('status');
-            $table->string('credit_balance');
-            $table->string('active');
+            $table->string('api')->nullable();
+            $table->string('account_id')->nullable();
+            $table->string('account_name')->nullable();
+            $table->string('status')->nullable();
+            $table->string('credit_balance')->nullable();
+            $table->string('active')->nullable();
             $table->timestamps();
         });
     }

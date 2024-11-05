@@ -39,7 +39,7 @@
 									</div>                             
                                         <div class="row justify-content-center">
                                             <div class="global-table-area">
-                                                <div class="table-responsive overflow-auto h-540" id="show_accounts">
+                                                <div class="table-responsive overflow-auto" id="show_accounts">
                                                 </div>
                                             </div>
                                         </div>
@@ -93,6 +93,7 @@
                       <div class="form-floating">
                         <select class="form-select form-control" aria-label="Default select example" id="priv" name="priv">
                           <option selected="">Enter Privilege</option>
+                          <option value="Principal">Principal</option>
                           <option value="Administrator">Administrator</option>
                           <option value="Teacher">Teacher</option>
                         </select>
@@ -162,7 +163,7 @@ aria-hidden="true">
 $(document).ready(function() {
 
                 // Open modal and reset form on button click
-        $('#new_student').click(function() {
+        $('#new_account').click(function() {
             $('#addprofile').modal('show');
             resetForm(); // Reset the form fields
         });

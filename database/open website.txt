@@ -1,0 +1,39 @@
+Step 1: Open Laragon
+Launch Laragon: Open Laragon from your desktop or start menu.
+
+Start Services: Ensure both Apache (or Nginx, depending on your setup) and MySQL are running. You can start them by clicking Start All in Laragon.
+
+Step 2: Open a Terminal in Laragon
+Open Terminal: In Laragon, right-click on the Laragon window, and click Terminal. This will open a terminal at the C:\laragon\www directory.
+
+Navigate to Your Project: Change the directory to your Laravel project (attendance_monitoring):
+
+bash
+cd attendance_monitoring
+
+Step 3: Run Laravel's Built-in Server
+Run the Application: To start the Laravel application, use Laravel's built-in development server. In the terminal, run:
+
+php artisan serve
+
+Access the Application: Once the server is running, it will provide a URL such as http://127.0.0.1:8000. Open this URL in your web browser.
+
+Alternatively, if Laragon is set up to handle your app’s domain, visit http://attendance_monitoring.test
+
+
+Entrance Scan
+http://attendance_monitoring.test
+
+Exit Scan
+http://attendance_monitoring.test/exit
+
+Login
+http://attendance_monitoring.test/login
+
+Administrator
+admin@gmail.om
+adminadmin
+
+Teacher
+test@gmail.com
+adminadmin

@@ -34,13 +34,35 @@ class SubjectsController extends Controller
         // Return a view or other response
         return view('scan-subject', compact('subjectData')); // Pass $subject to the view if needed
     }
-    public function subjects_logs(){
-          // Fetch all subjects for the dropdown
-          $subjects = Subject::all(); // You may want to filter based on user's grade
+
+    public function subjects_logs(Request $request) {
+        // Get the logged-in user
+        $user = Auth::user();
         
-          // Pass the subjects to the view
-          return view('subjects_logs', compact('subjects'));
+        // Fetch all subjects for the dropdown based on user privilege
+        $subjects = Subject::when($user->privilege === 'Teacher', function ($query) use ($user) {
+            return $query->where('grade', $user->Grade); // Filter by the teacher's grade
+        })->get();
+        
+        // You can add any additional logic for Administrators if needed
+        if ($user->privilege === 'Administrator'  || $user->privilege === 'Principal') {
+            // Fetch all subjects or apply specific logic for administrators
+            $subjects = Subject::all();
+        }
+    
+        // If a date range and subject are provided in the request, filter logs accordingly
+        $logs = [];
+        if ($request->has(['subject_id', 'start_date', 'end_date'])) {
+            $logs = SubjectLog::where('subject_id', $request->subject_id)
+                ->whereBetween('date', [$request->start_date, $request->end_date])
+                ->get();
+        }
+    
+        // Pass the subjects and logs to the view
+        return view('subjects_logs', compact('subjects', 'logs'));
     }
+
+    
     
     public function subjects_logs_data(Request $request) {
     
@@ -51,13 +73,14 @@ class SubjectsController extends Controller
      $subjectId = $request->input('subject_id');
      $startDate = $request->input('start_date');
      $endDate = $request->input('end_date');
- 
+     $handledGrade = $user->Grade;
+
      // Build the query based on the user privilege
-     if ($user->privilege === 'Administrator') {
+     if ($user->privilege === 'Administrator'  || $user->privilege === 'Principal') {
          $api = DB::table('subject_logs')
              ->join('students', 'students.id', '=', 'subject_logs.Student_ID')
              ->join('subject', 'subject_logs.subject_id', '=', 'subject.id')
-             ->select('subject_logs.*', 'students.*', 'subject.subject_name');
+             ->select('subject_logs.*', 'students.*', 'subject.subject_name', 'subject.start_time', 'subject_logs.id as student_log_id'); // Include student_logs.id
  
          // If a subject is selected, filter by subject ID
          if ($subjectId) {
@@ -74,7 +97,8 @@ class SubjectsController extends Controller
          $api = DB::table('subject_logs')
              ->join('students', 'students.id', '=', 'subject_logs.Student_ID')
              ->join('subject', 'subject_logs.subject_id', '=', 'subject.id')
-             ->select('subject_logs.*', 'students.*', 'subject.subject_name');
+             ->where('students.Grade', $handledGrade )
+             ->select('subject_logs.*', 'students.*', 'subject.subject_name', 'subject.start_time', 'subject_logs.id as student_log_id'); // Include student_logs.id
  
          // If a subject is selected, filter by subject ID
          if ($subjectId) {
@@ -89,53 +113,103 @@ class SubjectsController extends Controller
          $api = $api->get();
      }
     
-       $output = ''; // Initialize the $output variable
-    
-       if ($api->count() > 0) {
+        // Prepare the output HTML
+    $logsCount = $api->count(); // Get the count of logs
+    $naCount = 0; // Initialize counter for N/A entries
+
+    // Check log count and set the output accordingly
+    $output = '';
+    $badgeHtml = '';
+
+    if ($logsCount > 0) {
+        // Set badge for success
+        $badgeHtml = '<h3>Total Count : <span class="badge bg-success">' . $logsCount . '</span></h3>';
+
+        $output .= '<form id="deleteLogsForm">'; // Add a form tag
         $output .= '<table id="basic_config" class="table align-middle table-bordered">
-        <thead  class="text-dark">  
-            <tr>
-                <th>Student Number</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Grade</th>
-                <th>Parent</th>
-                <th>Parent Number</th>
-                <th>Subject</th>
-                <th>Date</th>
-                <th>IN</th>
-            </tr>
-        </thead>
-        <tbody>';
+            <thead class="text-dark">  
+                <tr>
+                    <th>Student Number</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Grade</th>
+                    <th>Parent</th>
+                    <th>Parent Number</th>
+                    <th>Subject</th>
+                    <th>Date</th>
+                    <th>IN</th>
+                    <th>OUT</th>
+                    <th>LATE</th> <!-- New LATE column -->
+                </tr>
+            </thead>
+            <tbody>';
 
         foreach ($api as $rs) {
-        // Convert date to PH time zone
+            // Convert date to PH time zone
             $phTime = Carbon::parse($rs->Date)->format('F d, Y');
+
+       // Count N/A entries
+       if (is_null($rs->In)) {
+        $naCount++; // Increment N/A count if In or Out is null
+    }
 
             // Format time with AM/PM or display N/A if time is null
             $amIn = $rs->In ? Carbon::parse($rs->In)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
+            $amOut = $rs->Out ? Carbon::parse($rs->Out)->format('h:i A') : '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>';
+   
+     
+             // Format Out time
+            if (is_null($rs->In)) {
+                $outTime = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">N/A</span>'; // If In is null, set Out to N/A
+            } elseif (is_null($rs->Out)) {
+                $amOut = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-warning">Cutting</span>'; // If Out is null but In is not
+            } else {
+                $amOut = Carbon::parse($rs->Out)->format('h:i A'); // Format Out if not null
+            }
+            
+            // Determine if the student is late
+            $lateStatus = '';
+            if ($rs->In) {
+                $inTime = Carbon::parse($rs->In);
+                $startTime = Carbon::parse($rs->start_time);
+                
+                // Check if late by 15 minutes
+                if ($inTime->gt($startTime->addMinutes(15))) {
+                    $lateStatus = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-danger">Yes</span>'; // Student is late
+                } else {
+                    $lateStatus = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-success">No</span>'; // Student is on time
+                }
+            } else {
+                $lateStatus = '<span class="badge rounded-pill fs-13 fw-normal py-2 px-3 bg-warning">N/A</span>'; // No IN time available
+            }
+
 
             $output .= '<tr>
                 <td class="align-items-center"><img style="cursor: pointer;" src="storage/images/' . $rs->Image . '" class="rounded-circle wh-50" onclick="openImageViewer(\'storage/images/' . $rs->Image . '\')"><span class="fw-medium fs-15 ms-3">' . $rs->Student_Number . '</span></td>
                 <td>' . $rs->Name . '</td>
                 <td>' . $rs->Email . '</td>
-                 <td>' . 'Grade ' . $rs->Grade . '</td>
+                <td>' . 'Grade ' . $rs->Grade . '</td>
                 <td>' . $rs->Parent_Name . '</td>
                 <td>' . $rs->Parent_Number . '</td>
                 <td>' . $rs->subject_name . '</td>
                 <td>' . $phTime . '</td>
                 <td>' . $amIn . '</td>
+                <td>' . $amOut . '</td>
+                <td>' . $lateStatus . '</td> <!-- LATE status -->
             </tr>';
         }
-    
-           $output .= '</tbody></table>';
-           echo $output;
-       } else {
-           echo '<div class="alert alert-danger bg-danger text-white" role="alert">
-           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-circle me-2" style="width: 20px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-           No record in the database!
-       </div>';
-       }
+
+        $output .= '</tbody></table>';
+        $output .= '</form>'; // Close the form
+    } else {
+        // Set badge for danger
+        $badgeHtml = '<h3>Total Count :  <span class="badge bg-danger">0</span></h3>';
+
+        $output .= '<div class="alert alert-danger bg-danger text-white" role="alert">No record in the database!</div>';
+    }
+
+    // Return both the output and the logs count as JSON, along with the badge HTML
+    return response()->json(['html' => $output, 'log_count' => $logsCount, 'na_count' => $naCount, 'badge' => $badgeHtml]);
     }
     
 public function fetchsubjects() {
@@ -150,7 +224,7 @@ public function fetchsubjects() {
     // Get subjects for the logged-in user based on the handled grade and user ID
 
 
-        if ($user->privilege === 'Administrator') {
+        if ($user->privilege === 'Administrator'  || $user->privilege === 'Principal') {
             $api = DB::table('subject')
             ->get();
         } else if ($user->privilege === 'Teacher') {
@@ -286,18 +360,14 @@ public function store_subject(Request $request) {
 
 
 
-
-
 public function scanner_subject(Request $request)
 {
-
     // Search for the student ID based on the provided scanid
     $student = students::where('Student_Number', $request->scanid)->first();
     $subject = subject::where('id', $request->subject_id)->first();
     
     // Fetch the active API details from the sms_apis table
     $activeApi = SmsApi::where('active', 'Active')->first();
-
 
     if (!$student) {
         return response()->json([
@@ -312,59 +382,131 @@ public function scanner_subject(Request $request)
     // Get the current time in PH time
     $currentTime = Carbon::now('Asia/Manila')->format('H:i:s');
 
+    // Check if there's already a record for today
+    $record = SubjectLog::where('student_id', $studentId)
+        ->where('subject_id', $request->subject_id)
+        ->whereDate('Date', today())
+        ->first();
 
-// Get the current time in Manila time (PH time) with AM/PM format
-$manilaTime = Carbon::now('Asia/Manila')->format('F d, Y h:i A');
+    if ($request->time_action === 'time_in') {
+        if ($record) {
+            return response()->json([
+                'status' => 400,
+                'message' => 'Student already recorded for Time In today.',
+            ]);
+        }
 
-$semaphoreText = "Ang inyong anak na si $student->Name ($student->Student_Number) ay pumasok sa subject na $subject->Subject_Name ";
+        // Create a new record for Time In
+        SubjectLog::create([
+            'student_id' => $studentId,
+            'subject_id' => $request->subject_id,
+            'Date' => today(),
+            'In' => $currentTime,
+            'created_at' => now(),
+        ]);
 
-$ch = curl_init();
-$parameters = array(
-    'apikey' => $activeApi->api,
-    'number' => $student->Parent_Number,
-    'message' => 'Senior Highschool : ' . $semaphoreText,
-    'sendername' => 'LandogzWeb'
-);
+        $responseData = [
+            'status' => 200,
+            'message' => 'Successfully entered to the ' . $subject->Subject_Name . ' subject!',
+            'student' => [
+                'id' => $student->id,
+                'name' => $student->Name,
+                'student_number' => $student->Student_Number, 
+                'image_url' => $student->Image,
+                'grade' => $student->Grade,
+            ],
+        ];
 
+        // Custom message for Time In
+        $semaphoreText = "Ang inyong anak na si $student->Name ($student->Student_Number) ay pumasok sa subject na $subject->Subject_Name ";
+    } elseif ($request->time_action === 'time_out') {
+        // If no record exists for Time In
+        if (!$record) {
+            return response()->json([
+                'status' => 400,
+                'message' => 'No Time In record found for today. Please scan Time In first.',
+            ]);
+        }
 
-    // Create a new record if no record is found
-    SubjectLog::create([
-        'student_id' => $studentId,
-        'subject_id' => $request->subject_id,
-        'Date' => today(),
-        'In' => $currentTime, // Set AM_in or PM_in based on the time
-        'created_at' => now(),
-    ]);
+        // Update the existing record for Time Out
+        $record->Out = $currentTime; // Update the "Out" field
+        $record->save();
 
+        $responseData = [
+            'status' => 200,
+            'message' => 'Successfully recorded Time Out for ' . $subject->Subject_Name . ' subject!',
+            'student' => [
+                'id' => $student->id,
+                'name' => $student->Name,
+                'student_number' => $student->Student_Number, 
+                'image_url' => $student->Image,
+                'grade' => $student->Grade,
+            ],
+        ];
 
+        // Custom message for Time Out
+        $semaphoreText = "Ang inyong anak na si $student->Name ($student->Student_Number) ay nakalabas na sa subject na $subject->Subject_Name ";
+    }
 
-// Prepare the response data indicating new record creation
-$responseData = [
-    'status' => 200,
-    'message' => 'Successfully entered to the ' . $subject->Subject_Name . ' subject !',
-    'student' => [
-        'id' => $student->id,
-        'name' => $student->Name,
-        'student_number' => $student->Student_Number, 
-        'image_url' => $student->Image,
-        'grade' => $student->Grade,
-        // Add other details as needed
-    ],
-];
+    // Send SMS notification
+    $ch = curl_init();
+    $parameters = array(
+        'apikey' => $activeApi->api,
+        'number' => $student->Parent_Number,
+        'message' => 'Junior Highschool : ' . $semaphoreText,
+        'sendername' => 'PRMSU'
+    );
 
-curl_setopt( $ch, CURLOPT_URL,'https://semaphore.co/api/v4/messages' );
-curl_setopt( $ch, CURLOPT_POST, 1 );
-
-//Send the parameters set above with the request
-curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( $parameters ) );
-
-// Receive response from server
-curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-$output = curl_exec( $ch );
-curl_close ($ch);
+    curl_setopt($ch, CURLOPT_URL, 'https://semaphore.co/api/v4/messages');
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($parameters));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $output = curl_exec($ch);
+    curl_close($ch);
 
     return response()->json($responseData);
 }
+
+
+public function delete_selected_logs(Request $request)
+{
+    $ids = $request->input('ids');
+
+    if (empty($ids)) {
+        return response()->json(['status' => 400, 'message' => 'No logs selected.']);
+    }
+
+    // Delete logs with the selected IDs
+    SubjectLog::whereIn('id', $ids)->delete();
+
+    return response()->json(['status' => 200, 'message' => 'Selected logs deleted successfully.']);
+}
+
+public function delete_logs()
+{
+    // Get the logged-in user (teacher)
+    $user = Auth::user();
+
+    // Fetch all subject IDs assigned to this user (teacher)
+    $subjectIds = Subject::where('user_id', $user->id)->pluck('id')->toArray();
+
+    // If no subjects are found, return a response indicating no logs to delete
+    if (empty($subjectIds)) {
+        return response()->json(['success' => false, 'message' => 'No subjects found for the logged-in teacher.']);
+    }
+
+    // Delete all logs in subject_logs table where the subject_id is in the fetched subject IDs
+    $deletedLogs = SubjectLog::whereIn('subject_id', $subjectIds)->delete();
+
+    // If no logs were deleted, return a message indicating nothing was deleted
+    if ($deletedLogs == 0) {
+        return response()->json(['success' => false, 'message' => 'No subject logs found to delete.']);
+    }
+
+    // Return success response
+    return response()->json(['success' => true, 'message' => 'Subject logs deleted successfully.']);
+}
+
 
 
 }
