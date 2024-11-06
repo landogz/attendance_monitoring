@@ -77,37 +77,79 @@ class SubjectsController extends Controller
 
      // Build the query based on the user privilege
      if ($user->privilege === 'Administrator'  || $user->privilege === 'Principal') {
-         $api = DB::table('subject_logs')
-             ->join('students', 'students.id', '=', 'subject_logs.Student_ID')
-             ->join('subject', 'subject_logs.subject_id', '=', 'subject.id')
-             ->select('subject_logs.*', 'students.*', 'subject.subject_name', 'subject.start_time', 'subject_logs.id as student_log_id'); // Include student_logs.id
+        //  $api = DB::table('subject_logs')
+        //      ->join('students', 'students.id', '=', 'subject_logs.Student_ID')
+        //      ->join('subject', 'subject_logs.subject_id', '=', 'subject.id')
+        //      ->select('subject_logs.*', 'students.*', 'subject.subject_name', 'subject.start_time', 'subject_logs.id as student_log_id'); // Include student_logs.id
+        $api = DB::table('students')
+        ->select(
+            'students.*',
+            'subject.*',
+            DB::raw('COALESCE(subject_logs.Date, all_dates.Date) AS log_date'),
+            'subject.Subject_Name AS subject_name',
+            'subject_logs.*'
+        )
+        ->distinct('students.Student_Number')
+        ->crossJoin(DB::raw('(SELECT DISTINCT Date FROM subject_logs) AS all_dates'))
+        ->crossJoin('subject')
+        ->leftJoin('subject_logs', function ($join) {
+            $join->on('students.id', '=', 'subject_logs.Student_ID')
+                 ->on('all_dates.Date', '=', 'subject_logs.Date')
+                 ->on('subject.id', '=', 'subject_logs.subject_id');
+        })
+        ->orderBy('students.Student_Number', 'asc')
+        ->orderBy('log_date', 'desc')
+        ->orderBy('subject.id', 'asc');
+    
  
          // If a subject is selected, filter by subject ID
          if ($subjectId) {
-             $api->where('subject_logs.subject_id', $subjectId);
+            $api->where('subject.id', $subjectId);
          }
  
          // If a date range is provided, filter by the date range
          if ($startDate && $endDate) {
-             $api->whereBetween('subject_logs.Date', [$startDate, $endDate]);
+            $api->whereBetween(DB::raw('COALESCE(subject_logs.Date, all_dates.Date)'), [$startDate, $endDate]);
          }
  
          $api = $api->get();
      } else if ($user->privilege === 'Teacher') {
-         $api = DB::table('subject_logs')
-             ->join('students', 'students.id', '=', 'subject_logs.Student_ID')
-             ->join('subject', 'subject_logs.subject_id', '=', 'subject.id')
-             ->where('students.Grade', $handledGrade )
-             ->select('subject_logs.*', 'students.*', 'subject.subject_name', 'subject.start_time', 'subject_logs.id as student_log_id'); // Include student_logs.id
- 
+        //  $api = DB::table('subject_logs')
+        //      ->join('students', 'students.id', '=', 'subject_logs.Student_ID')
+        //      ->join('subject', 'subject_logs.subject_id', '=', 'subject.id')
+        //      ->where('students.Grade', $handledGrade )
+        //      ->select('subject_logs.*', 'students.*', 'subject.subject_name', 'subject.start_time', 'subject_logs.id as student_log_id'); // Include student_logs.id
+       
+        $api = DB::table('students')
+        ->select(
+            'students.*',
+            'subject.*',
+            DB::raw('COALESCE(subject_logs.Date, all_dates.Date) AS log_date'),
+            'subject.Subject_Name AS subject_name',
+            'subject_logs.*'
+        )
+        ->distinct('students.Student_Number')
+        ->crossJoin(DB::raw('(SELECT DISTINCT Date FROM subject_logs) AS all_dates'))
+        ->crossJoin('subject')
+        ->leftJoin('subject_logs', function ($join) {
+            $join->on('students.id', '=', 'subject_logs.Student_ID')
+                 ->on('all_dates.Date', '=', 'subject_logs.Date')
+                 ->on('subject.id', '=', 'subject_logs.subject_id');
+        })
+        ->where('students.Grade', $handledGrade )
+        ->where('subject.user_id', $user->id )
+        ->orderBy('students.Student_Number', 'asc')
+        ->orderBy('log_date', 'desc')
+        ->orderBy('subject.id', 'asc');
+
          // If a subject is selected, filter by subject ID
          if ($subjectId) {
-             $api->where('subject_logs.subject_id', $subjectId);
+             $api->where('subject.id', $subjectId);
          }
  
          // If a date range is provided, filter by the date range
          if ($startDate && $endDate) {
-             $api->whereBetween('subject_logs.Date', [$startDate, $endDate]);
+            $api->whereBetween(DB::raw('COALESCE(subject_logs.Date, all_dates.Date)'), [$startDate, $endDate]);
          }
  
          $api = $api->get();
@@ -146,7 +188,7 @@ class SubjectsController extends Controller
 
         foreach ($api as $rs) {
             // Convert date to PH time zone
-            $phTime = Carbon::parse($rs->Date)->format('F d, Y');
+            $phTime = Carbon::parse($rs->log_date)->format('F d, Y');
 
        // Count N/A entries
        if (is_null($rs->In)) {

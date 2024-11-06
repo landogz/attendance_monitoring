@@ -222,7 +222,7 @@
                 $("#show_accounts").html(response.html); // Set the HTML response
             $("#logCount").html(response.badge); // Set the badge HTML based on log count
                 var table = $("#basic_config").DataTable({
-                    order: [[0, 'asc']], // Order by the first column in ascending order
+                    order: [[7, 'asc']], // Order by the first column in ascending order
                     dom: 'Bfrtip', // Show buttons for export
                     buttons: [
                         {
@@ -328,7 +328,7 @@
 
 
                 var table = $("#basic_config").DataTable({
-                    order: [[0, 'asc']], // Order by the first column in ascending order
+                    order: [[7, 'asc']], // Order by the first column in ascending order
                     dom: 'Bfrtip', // Show buttons for export
                     buttons: [
                         {
