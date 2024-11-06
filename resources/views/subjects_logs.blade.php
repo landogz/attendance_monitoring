@@ -247,6 +247,14 @@
     extend: 'print',
     text: 'Print',
     customize: function(win) {
+        var naCount = 0;
+                            $(win.document.body).find('table tbody tr').each(function() {
+                                var inCell = $(this).find('td').eq(8); // Assuming 'In' is the 9th column (adjust index if needed)
+                                if (inCell.text().trim() === 'N/A') {
+                                    naCount++;
+                                }
+                            });
+                            
         // Remove the default title by setting it to an empty string
         $(win.document.body).find('title').text('');
 
@@ -265,7 +273,7 @@
                 '<h3 style="text-align: center; margin-top: 20px;">Subject Logs</h3>' + // Centered title for the logs
                 // Add printed by information
                 '<div style="text-align: left; margin-top: 10px;">' + // Align to the right
-                    '<span>Printed by: ' + '{{ auth()->user()->name }} | No Time In Count : ' + response.na_count + '</span>' + // User and N/A count
+                    '<span>Printed by: ' + '{{ auth()->user()->name }} | No Time In Count : ' + naCount + '</span>' + // User and N/A count
                 '</div>'
             );
 
@@ -351,6 +359,14 @@
     extend: 'print',
     text: 'Print',
     customize: function(win) {
+        var naCount = 0;
+                            $(win.document.body).find('table tbody tr').each(function() {
+                                var inCell = $(this).find('td').eq(8); // Assuming 'In' is the 9th column (adjust index if needed)
+                                if (inCell.text().trim() === 'N/A') {
+                                    naCount++;
+                                }
+                            });
+
         // Remove the default title by setting it to an empty string
         $(win.document.body).find('title').text('');
 
@@ -369,7 +385,7 @@
                 '<h3 style="text-align: center; margin-top: 20px;">Subject Logs</h3>' + // Centered title for the logs
                 // Add printed by information
                 '<div style="text-align: left; margin-top: 10px;">' + // Align to the right
-                    '<span>Printed by: ' + '{{ auth()->user()->name }} | No Time In Count : ' + response.na_count + '</span>' + // User and N/A count
+                    '<span>Printed by: ' + '{{ auth()->user()->name }} | No Time In Count : ' + naCount + '</span>' + // User and N/A count
                 '</div>'
             );
 
